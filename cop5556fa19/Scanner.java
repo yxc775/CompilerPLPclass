@@ -22,8 +22,14 @@ import java.io.IOException;
 import java.io.Reader;
 
 public class Scanner {
-	
 	Reader r;
+	boolean isEnded;
+	int ch = -1;
+	int curpos = -1;
+	int curlines = 0;
+	private enum State{
+		START,HAVE_EQ,HAVE_COLLON, IN_NUMLIT,IN_INDEN,END;
+	}
 
 
 	@SuppressWarnings("serial")
@@ -35,13 +41,103 @@ public class Scanner {
 	
 	public Scanner(Reader r) throws IOException {
 		this.r = r;
+		isEnded = false;
 	}
+	
+	public void getchar() throws IOException{
+		ch = r.read();
+		if(!isEnded){
+			curpos ++;
+		}
+	}
+	
+	
 
 
 	public Token getNext() throws Exception {
 		    //replace this code.  Just for illustration
-		    if (r.read() == -1) { return new Token(EOF,"eof",0,0);}
-			throw new LexicalException("Useful error message");
+			Token out = null;
+			State state = State.START;
+			StringBuilder sb = new StringBuilder();
+			if(ch < 0) {
+				getchar();
+			}
+			while(out == null) {
+				switch(state) {
+					case START:
+						skipwhiteSpace();
+						/*if(this.ch == - 1){
+					    	state = State.END;
+					    }
+					    else {
+					    	throw new LexicalException("Useful error message");
+					    }*/
+						switch(ch) {
+						case ',':
+							out = new Token(COMMA,",",curpos,curlines);
+							getchar();
+							break;
+						case ':':
+							sb = new StringBuilder();
+							state = State.HAVE_COLLON;
+							sb.append(':');
+							getchar();
+							break;
+						case '=':
+							sb = new StringBuilder();
+							state = State.HAVE_EQ;
+							sb.append('=');
+							getchar();
+							break;
+						case -1:
+							state = State.END;
+							break;
+						default:
+							throw new LexicalException("Useful error message");
+						}
+					    break;
+					case HAVE_EQ:
+						if((char)this.ch == '=') {
+							sb.append('=');
+							out = new Token(REL_EQEQ,sb.toString(),curpos,curlines);
+						}
+						else {
+							out = new Token(ASSIGN,sb.toString(),curpos - 1,curlines);
+						}
+						break;
+					case HAVE_COLLON:
+						if((char)this.ch == ':') {
+							sb.append(':');
+							out = new Token(COLONCOLON,sb.toString(),curpos,curlines);
+							getchar();
+						}
+						else {
+							out = new Token(COLON,sb.toString(),curpos - 1,curlines);
+							state = State.START;
+						}
+						break;
+					case IN_NUMLIT:
+						break;
+					case IN_INDEN:
+						break;
+					case END:
+						this.isEnded = true;
+					    out =  new Token(EOF,"eof",curpos,curlines);
+					    break;
+					default:
+						throw new LexicalException("Useful error message");
+				}
+			}
+			return out;
 		}
+	
+	public void skipwhiteSpace() throws IOException{
+		while((char)this.ch == ' ') {
+			this.getchar();
+		}
+	}
 
+	
+	
 }
+
