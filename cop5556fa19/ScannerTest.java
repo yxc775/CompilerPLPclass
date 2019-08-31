@@ -78,11 +78,11 @@ class ScannerTest {
 	 */
 	@Test
 	void test2() throws Exception {
-		String file = "src\\testInputFiles\\test2.input"; 
+		String file = "testInputFiles\\test2.input"; 
 		Reader r = new BufferedReader(new FileReader(file));
 		Scanner s = new Scanner(r);
         assertThrows(LexicalException.class, ()->{
-        	s.getNext();
+		   s.getNext();
         });
 	}
 	
