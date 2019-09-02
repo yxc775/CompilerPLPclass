@@ -112,5 +112,26 @@ class ScannerTest {
 		assertEquals(t.kind,REL_EQEQ);
 		assertEquals(t.text,"==");
 	}
+	/*Can distinguish single and double, eg: COLON vs COLONCOLON*/
+	@Test
+	void testSingle() throws Exception {
+		Reader r = new StringReader(",,:=");
+		Scanner s = new Scanner(r);
+		Token t;
+		show(t= s.getNext());
+		assertEquals(t.kind,COMMA);
+		assertEquals(t.text,",");
+		show(t = s.getNext());
+		assertEquals(t.kind,COMMA);
+		assertEquals(t.text,",");
+		
+		show(t = s.getNext());
+		assertEquals(t.kind,COLON);
+		assertEquals(t.text,":");
+		
+		show(t = s.getNext());
+		assertEquals(t.kind,ASSIGN);
+		assertEquals(t.text,"=");
+	}
 
 }
