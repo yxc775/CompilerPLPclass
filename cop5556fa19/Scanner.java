@@ -62,19 +62,56 @@ public class Scanner {
 			if(ch < 0) {
 				getchar();
 			}
+			int pos = -1;
+			int line = -1;
 			while(out == null) {
 				switch(state) {
 					case START:
 						skipwhiteSpace();
-						/*if(this.ch == - 1){
-					    	state = State.END;
-					    }
-					    else {
-					    	throw new LexicalException("Useful error message");
-					    }*/
+						pos = this.curpos;
+						line = this.curlines;
 						switch(ch) {
+						case '+':
+							out = new Token(OP_PLUS, "+", pos, line);
+							getchar();
+							break;
+						case '-':
+							out = new Token(OP_MINUS, "-", pos, line);
+							getchar();
+							break;
+						case '*':
+							out = new Token(OP_TIMES, "*",pos, line);
+							getchar();
+							break;
+						case '/':
+							out = new Token(OP_DIV, "/", pos, line);
+							getchar();
+							break;
+						case '%':
+							out = new Token(OP_MOD, "%", pos, line);
+							getchar();
+							break;
+						case '^':
+							out = new Token(OP_POW, "^", pos, line);
+							getchar();
+							break;
+						case '#':
+							out = new Token(OP_HASH, "#", pos, line);
+							getchar();
+							break;
+						case '&':
+							out = new Token(BIT_AMP, "&", pos, line);
+							getchar();
+							break;
+						case '|':
+							out = new Token(BIT_OR, "|", pos, line);
+							getchar();
+							break;
+						case '~':
+							
+							break;
 						case ',':
-							out = new Token(COMMA,",",curpos,curlines);
+							out = new Token(COMMA,",",pos, line);
 							getchar();
 							break;
 						case ':':
@@ -99,20 +136,20 @@ public class Scanner {
 					case HAVE_EQ:
 						if((char)this.ch == '=') {
 							sb.append('=');
-							out = new Token(REL_EQEQ,sb.toString(),curpos,curlines);
+							out = new Token(REL_EQEQ,sb.toString(),pos, line);
 						}
 						else {
-							out = new Token(ASSIGN,sb.toString(),curpos - 1,curlines);
+							out = new Token(ASSIGN,sb.toString(),pos, line);
 						}
 						break;
 					case HAVE_COLLON:
 						if((char)this.ch == ':') {
 							sb.append(':');
-							out = new Token(COLONCOLON,sb.toString(),curpos,curlines);
+							out = new Token(COLONCOLON,sb.toString(),pos, line);
 							getchar();
 						}
 						else {
-							out = new Token(COLON,sb.toString(),curpos - 1,curlines);
+							out = new Token(COLON,sb.toString(),pos, line);
 							state = State.START;
 						}
 						break;
@@ -122,7 +159,7 @@ public class Scanner {
 						break;
 					case END:
 						this.isEnded = true;
-					    out =  new Token(EOF,"eof",curpos,curlines);
+					    out =  new Token(EOF,"eof",pos,line);
 					    break;
 					default:
 						throw new LexicalException("Useful error message");
@@ -132,8 +169,35 @@ public class Scanner {
 		}
 	
 	public void skipwhiteSpace() throws IOException{
-		while((char)this.ch == ' ') {
+		boolean reachR = false;
+		while((char)this.ch == ' ' || (char)this.ch == '\t' || (char)this.ch == '\f' || isLineter()) {
+			
+			if(isLineter()) {
+				if((char)this.ch == '\n' && !reachR) {
+					this.curlines ++;
+					this.curpos = 0;
+				}
+				else if((char)this.ch == '\r'){
+					this.curlines ++;
+					this.curpos = 0;
+					reachR = true;
+				}
+				else {
+					reachR = false;
+				}
+			}
 			this.getchar();
+			
+		}
+		reachR = false;
+	}
+	
+	public boolean isLineter() throws IOException{
+		if((char)this.ch == '\n' || (char)this.ch == '\r'){
+			return true;
+		}
+		else {
+			return false;
 		}
 	}
 
