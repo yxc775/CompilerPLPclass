@@ -133,5 +133,97 @@ class ScannerTest {
 		assertEquals(t.kind,ASSIGN);
 		assertEquals(t.text,"=");
 	}
+	
+	/*test reline minor*/
+	@Test
+	void testSpacing() throws Exception {
+		Reader r = new StringReader("\r\n,");
+		Scanner s = new Scanner(r);
+		Token t;
+		show(t= s.getNext());
+		assertEquals(t.kind,COMMA);
+		assertEquals(t.text,",");
+		assertEquals(t.pos,0);
+		assertEquals(t.line,1);
+		
+	}
+	
+	/*test reline minor 2*/
+	@Test
+	void testSpacing1() throws Exception {
+		Reader r = new StringReader("\r\n,\r\n,");
+		Scanner s = new Scanner(r);
+		Token t;
+		show(t= s.getNext());
+		assertEquals(t.kind,COMMA);
+		assertEquals(t.text,",");
+		assertEquals(t.pos,0);
+		assertEquals(t.line,1);
+		show(t= s.getNext());
+		assertEquals(t.kind,COMMA);
+		assertEquals(t.text,",");
+		assertEquals(t.pos,0);
+		assertEquals(t.line,2);
+	}
+	
+	/*test operations*/
+	@Test
+	void testOp() throws Exception {
+		Reader r = new StringReader("+-*/%^#&~|");
+		Scanner s = new Scanner(r);
+		Token t;
+		show(t= s.getNext());
+		assertEquals(t.kind,OP_PLUS);
+		assertEquals(t.text,"+");
+		assertEquals(t.pos,0);
+		assertEquals(t.line,0);
+		show(t= s.getNext());
+		assertEquals(t.kind,OP_MINUS);
+		assertEquals(t.text,"-");
+		assertEquals(t.pos,1);
+		assertEquals(t.line,0);
+		show(t= s.getNext());
+		assertEquals(t.kind,OP_TIMES);
+		assertEquals(t.text,"*");
+		assertEquals(t.pos,2);
+		assertEquals(t.line,0);
+		show(t= s.getNext());
+		assertEquals(t.kind,OP_DIV);
+		assertEquals(t.text,"/");
+		assertEquals(t.pos,3);
+		assertEquals(t.line,0);
+		show(t= s.getNext());
+		assertEquals(t.kind,OP_MOD);
+		assertEquals(t.text,"%");
+		assertEquals(t.pos,4);
+		assertEquals(t.line,0);
+		show(t= s.getNext());
+		assertEquals(t.kind,OP_POW);
+		assertEquals(t.text,"^");
+		assertEquals(t.pos,5);
+		assertEquals(t.line,0);
+		show(t= s.getNext());
+		assertEquals(t.kind,OP_HASH);
+		assertEquals(t.text,"#");
+		assertEquals(t.pos,6);
+		assertEquals(t.line,0);
+		show(t= s.getNext());
+		assertEquals(t.kind,BIT_AMP);
+		assertEquals(t.text,"&");
+		assertEquals(t.pos,7);
+		assertEquals(t.line,0);
+		show(t= s.getNext());
+		assertEquals(t.kind,BIT_XOR);
+		assertEquals(t.text,"~");
+		assertEquals(t.pos,8);
+		assertEquals(t.line,0);
+		show(t= s.getNext());
+		assertEquals(t.kind,BIT_OR);
+		assertEquals(t.text,"|");
+		assertEquals(t.pos,9);
+		assertEquals(t.line,0);
+	}
+	
+	
 
 }

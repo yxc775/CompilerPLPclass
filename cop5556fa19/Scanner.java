@@ -28,7 +28,7 @@ public class Scanner {
 	int curpos = -1;
 	int curlines = 0;
 	private enum State{
-		START,HAVE_EQ,HAVE_COLLON, IN_NUMLIT,IN_INDEN,END;
+		START,HAVE_EQ,HAVE_COLLON,HAVE_XOR, IN_NUMLIT,IN_IDENT,END;
 	}
 
 
@@ -108,7 +108,10 @@ public class Scanner {
 							getchar();
 							break;
 						case '~':
-							
+							sb = new StringBuilder();
+							state = State.HAVE_XOR;
+							sb.append('~');
+							getchar();
 							break;
 						case ',':
 							out = new Token(COMMA,",",pos, line);
@@ -126,6 +129,10 @@ public class Scanner {
 							sb.append('=');
 							getchar();
 							break;
+						case '0': 
+							out = new Token(INTLIT,"0",pos,line);
+							getchar();
+							break;
 						case -1:
 							state = State.END;
 							break;
@@ -133,10 +140,21 @@ public class Scanner {
 							throw new LexicalException("Useful error message");
 						}
 					    break;
+					case HAVE_XOR:
+						if((char)this.ch == '=') {
+							sb.append('=');
+							out = new Token(REL_NOTEQ,sb.toString(),pos, line);
+							getchar();
+						}
+						else {
+							out = new Token(BIT_XOR,sb.toString(),pos, line);
+						}
+						break;
 					case HAVE_EQ:
 						if((char)this.ch == '=') {
 							sb.append('=');
 							out = new Token(REL_EQEQ,sb.toString(),pos, line);
+							getchar();
 						}
 						else {
 							out = new Token(ASSIGN,sb.toString(),pos, line);
@@ -150,44 +168,54 @@ public class Scanner {
 						}
 						else {
 							out = new Token(COLON,sb.toString(),pos, line);
-							state = State.START;
 						}
 						break;
 					case IN_NUMLIT:
 						break;
-					case IN_INDEN:
+					case IN_IDENT:
 						break;
 					case END:
 						this.isEnded = true;
 					    out =  new Token(EOF,"eof",pos,line);
 					    break;
 					default:
-						throw new LexicalException("Useful error message");
+						 if (Character.isDigit(ch)) {
+							 state = State.IN_NUMLIT;
+							 sb = new StringBuilder();
+							 sb.append((char)ch);
+							 getchar();
+							 }             
+						 else if (Character.isJavaIdentifierStart(ch)) {
+							 state = State.IN_IDENT;
+							 sb = new StringBuilder();
+							 sb.append((char)ch);
+							 getchar();
+							 }              
+						 else { 
+							 throw new LexicalException("Useful error message");  
+							 }          
+						 }
 				}
-			}
 			return out;
 		}
 	
 	public void skipwhiteSpace() throws IOException{
 		boolean reachR = false;
 		while((char)this.ch == ' ' || (char)this.ch == '\t' || (char)this.ch == '\f' || isLineter()) {
-			
 			if(isLineter()) {
 				if((char)this.ch == '\n' && !reachR) {
 					this.curlines ++;
-					this.curpos = 0;
 				}
 				else if((char)this.ch == '\r'){
 					this.curlines ++;
-					this.curpos = 0;
 					reachR = true;
 				}
 				else {
 					reachR = false;
 				}
+				this.curpos = -1;
 			}
 			this.getchar();
-			
 		}
 		reachR = false;
 	}
