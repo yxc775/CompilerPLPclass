@@ -64,7 +64,7 @@ class ScannerTest {
 	 * test should remain valid in your complete Scanner.
 	 */
 	@Test
-	void test1() throws Exception {
+	void testNULLinput() throws Exception {
 		Reader r = new StringReader("@");
 		Scanner s = new Scanner(r);
         assertThrows(LexicalException.class, ()->{
@@ -77,7 +77,7 @@ class ScannerTest {
 	 *
 	 */
 	@Test
-	void test2() throws Exception {
+	void testNULLFile() throws Exception {
 		String file = "testInputFiles\\test2.input"; 
 		Reader r = new BufferedReader(new FileReader(file));
 		Scanner s = new Scanner(r);
@@ -93,7 +93,7 @@ class ScannerTest {
 	 * @throws Exception
 	 */
 	@Test
-	void test3() throws Exception {
+	void testOPMulti() throws Exception {
 		Reader r = new StringReader(",,::==");
 		Scanner s = new Scanner(r);
 		Token t;
@@ -114,7 +114,7 @@ class ScannerTest {
 	}
 	/*Can distinguish single and double, eg: COLON vs COLONCOLON*/
 	@Test
-	void testSingle() throws Exception {
+	void testOPSingle() throws Exception {
 		Reader r = new StringReader(",,:=");
 		Scanner s = new Scanner(r);
 		Token t;
@@ -168,8 +168,8 @@ class ScannerTest {
 	
 	/*test operations*/
 	@Test
-	void testOp() throws Exception {
-		Reader r = new StringReader("+-*/%^#&~|");
+	void testOPGeneral() throws Exception {
+		Reader r = new StringReader("+-*/%^#&~|(){}[]");
 		Scanner s = new Scanner(r);
 		Token t;
 		show(t= s.getNext());
@@ -222,7 +222,137 @@ class ScannerTest {
 		assertEquals(t.text,"|");
 		assertEquals(t.pos,9);
 		assertEquals(t.line,0);
+		show(t= s.getNext());
+		assertEquals(t.kind,LPAREN);
+		assertEquals(t.text,"(");
+		assertEquals(t.pos,10);
+		assertEquals(t.line,0);
+		show(t= s.getNext());
+		assertEquals(t.kind,RPAREN);
+		assertEquals(t.text,")");
+		assertEquals(t.pos,11);
+		assertEquals(t.line,0);
+		show(t= s.getNext());
+		assertEquals(t.kind,LCURLY);
+		assertEquals(t.text,"{");
+		assertEquals(t.pos,12);
+		assertEquals(t.line,0);
+		show(t= s.getNext());
+		assertEquals(t.kind,RCURLY);
+		assertEquals(t.text,"}");
+		assertEquals(t.pos,13);
+		assertEquals(t.line,0);
+		show(t= s.getNext());
+		assertEquals(t.kind,LSQUARE);
+		assertEquals(t.text,"[");
+		assertEquals(t.pos,14);
+		assertEquals(t.line,0);
+		show(t= s.getNext());
+		assertEquals(t.kind,RSQUARE);
+		assertEquals(t.text,"]");
+		assertEquals(t.pos,15);
+		assertEquals(t.line,0);
 	}
+	
+	/*Test the situation of multiple ///*/
+	@Test
+	void testOPDuplication() throws Exception {
+		Reader r = new StringReader("///////");
+		Scanner s = new Scanner(r);
+		Token t;
+		show(t= s.getNext());
+		assertEquals(t.kind,OP_DIVDIV);
+		assertEquals(t.text,"//");
+		assertEquals(t.pos,0);
+		assertEquals(t.line,0);
+		show(t = s.getNext());
+		assertEquals(t.kind,OP_DIVDIV);
+		assertEquals(t.text,"//");
+		assertEquals(t.pos,2);
+		assertEquals(t.line,0);
+		show(t = s.getNext());
+		assertEquals(t.kind,OP_DIVDIV);
+		assertEquals(t.text,"//");
+		assertEquals(t.pos,4);
+		assertEquals(t.line,0);
+		show(t = s.getNext());
+		assertEquals(t.kind,OP_DIV);
+		assertEquals(t.text,"/");
+		assertEquals(t.pos,6);
+		assertEquals(t.line,0);
+	}
+	
+	/*Test the situation of multiple /// with space*/
+	@Test
+	void testOPDuplicationWSP() throws Exception {
+		Reader r = new StringReader("/ / /");
+		Scanner s = new Scanner(r);
+		Token t;
+		show(t= s.getNext());
+		assertEquals(t.kind,OP_DIV);
+		assertEquals(t.text,"/");
+		assertEquals(t.pos,0);
+		assertEquals(t.line,0);
+		show(t = s.getNext());
+		assertEquals(t.kind,OP_DIV);
+		assertEquals(t.text,"/");
+		assertEquals(t.pos,2);
+		assertEquals(t.line,0);
+		show(t = s.getNext());
+		assertEquals(t.kind,OP_DIV);
+		assertEquals(t.text,"/");
+		assertEquals(t.pos,4);
+		assertEquals(t.line,0);
+	}
+	
+	/*Test multiple branching from <,>*/
+	@Test
+	void testOPLES() throws Exception {
+		Reader r = new StringReader("<=>=<><<>><<<");
+		Scanner s = new Scanner(r);
+		Token t;
+		show(t= s.getNext());
+		assertEquals(t.kind,REL_LE);
+		assertEquals(t.text,"<=");
+		assertEquals(t.pos,0);
+		assertEquals(t.line,0);
+		show(t = s.getNext());
+		assertEquals(t.kind,REL_GE);
+		assertEquals(t.text,">=");
+		assertEquals(t.pos,2);
+		assertEquals(t.line,0);
+		show(t = s.getNext());
+		assertEquals(t.kind,REL_LT);
+		assertEquals(t.text,"<");
+		assertEquals(t.pos,4);
+		assertEquals(t.line,0);
+		show(t = s.getNext());
+		assertEquals(t.kind,REL_GT);
+		assertEquals(t.text,">");
+		assertEquals(t.pos,5);
+		assertEquals(t.line,0);
+		show(t = s.getNext());
+		assertEquals(t.kind,BIT_SHIFTL);
+		assertEquals(t.text,"<<");
+		assertEquals(t.pos,6);
+		assertEquals(t.line,0);
+		show(t = s.getNext());
+		assertEquals(t.kind,BIT_SHIFTR);
+		assertEquals(t.text,">>");
+		assertEquals(t.pos,8);
+		assertEquals(t.line,0);
+		show(t = s.getNext());
+		assertEquals(t.kind,BIT_SHIFTL);
+		assertEquals(t.text,"<<");
+		assertEquals(t.pos,10);
+		assertEquals(t.line,0);
+		show(t = s.getNext());
+		assertEquals(t.kind,REL_LT);
+		assertEquals(t.text,"<");
+		assertEquals(t.pos,12);
+		assertEquals(t.line,0);
+	}
+	
 	
 	
 

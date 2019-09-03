@@ -28,7 +28,12 @@ public class Scanner {
 	int curpos = -1;
 	int curlines = 0;
 	private enum State{
-		START,HAVE_EQ,HAVE_COLLON,HAVE_XOR, IN_NUMLIT,IN_IDENT,END;
+		START,
+		//state below for operations
+		HAVE_EQ,HAVE_COLLON,HAVE_XOR,HAVE_DIV,HAVE_LESS,HAVE_GREA,HAVE_DOT,HAVE_DOTDOT,
+		//state below for NUMLIT and 
+		IN_NUMLIT,IN_IDENT,
+		END;
 	}
 
 
@@ -50,7 +55,6 @@ public class Scanner {
 			curpos ++;
 		}
 	}
-	
 	
 
 
@@ -83,10 +87,6 @@ public class Scanner {
 							out = new Token(OP_TIMES, "*",pos, line);
 							getchar();
 							break;
-						case '/':
-							out = new Token(OP_DIV, "/", pos, line);
-							getchar();
-							break;
 						case '%':
 							out = new Token(OP_MOD, "%", pos, line);
 							getchar();
@@ -117,6 +117,34 @@ public class Scanner {
 							out = new Token(COMMA,",",pos, line);
 							getchar();
 							break;
+						case '(':
+							out = new Token(LPAREN,"(",pos,line);
+							getchar();
+							break;
+						case ')':
+							out = new Token(RPAREN,")",pos,line);
+							getchar();
+							break;
+						case '[':
+							out = new Token(LSQUARE,"[",pos,line);
+							getchar();
+							break;
+						case ']':
+							out = new Token(RSQUARE,"]",pos,line);
+							getchar();
+							break;
+						case '{':
+							out = new Token(LCURLY,"{",pos,line);
+							getchar();
+							break;
+						case '}':
+							out = new Token(RCURLY,"}",pos,line);
+							getchar();
+							break;
+						case ';':
+							out = new Token(SEMI,";",pos,line);
+							getchar();
+							break;
 						case ':':
 							sb = new StringBuilder();
 							state = State.HAVE_COLLON;
@@ -129,6 +157,26 @@ public class Scanner {
 							sb.append('=');
 							getchar();
 							break;
+						case '/':
+							sb = new StringBuilder();
+							state = State.HAVE_DIV;
+							sb.append('/');
+							getchar();
+							break;
+						case '<':
+							sb = new StringBuilder();
+							state = State.HAVE_LESS;
+							sb.append('<');
+							getchar();
+							break;
+						case '>':
+							sb = new StringBuilder();
+							state = State.HAVE_GREA;
+							sb.append('>');
+							getchar();
+							break;
+						case '.':
+							break;
 						case '0': 
 							out = new Token(INTLIT,"0",pos,line);
 							getchar();
@@ -140,6 +188,66 @@ public class Scanner {
 							throw new LexicalException("Useful error message");
 						}
 					    break;
+					case HAVE_DOT:
+						if((char)this.ch == '.') {
+							state = State.HAVE_DOTDOT;
+							sb.append('.');
+							getchar();
+						}
+						else {
+							out = new Token(DOT, sb.toString(), pos, line);
+						}
+						break;
+					case HAVE_DOTDOT:
+						if((char)this.ch == '.') {
+							sb.append('.');
+							out = new Token(DOT, sb.toString(), pos, line);
+							getchar();
+						}
+						else {
+							out = new Token(DOTDOT, sb.toString(), pos, line);
+						}
+						break;
+					case HAVE_LESS:
+						if((char)this.ch == '=') {
+							sb.append('=');
+							out = new Token(REL_LE,sb.toString(),pos, line);
+							getchar();
+						}
+						else if((char) this.ch == '<'){
+							sb.append('<');
+							out = new Token(BIT_SHIFTL, sb.toString(), pos, line);
+							getchar();
+						}
+						else {
+							out = new Token(REL_LT, sb.toString(), pos, line);
+						}
+						break;
+					case HAVE_GREA:
+						if((char)this.ch == '=') {
+							sb.append('=');
+							out = new Token(REL_GE,sb.toString(),pos, line);
+							getchar();
+						}
+						else if((char) this.ch == '>'){
+							sb.append('>');
+							out = new Token(BIT_SHIFTR, sb.toString(), pos, line);
+							getchar();
+						}
+						else {
+							out = new Token(REL_GT, sb.toString(), pos, line);
+						}
+						break;
+					case HAVE_DIV:
+						if((char)this.ch == '/') {
+							sb.append('/');
+							out = new Token(OP_DIVDIV,sb.toString(),pos, line);
+							getchar();
+						}
+						else {
+							out = new Token(OP_DIV, sb.toString(), pos, line);
+						}
+						break;
 					case HAVE_XOR:
 						if((char)this.ch == '=') {
 							sb.append('=');
