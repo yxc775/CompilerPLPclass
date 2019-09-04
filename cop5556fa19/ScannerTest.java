@@ -353,6 +353,64 @@ class ScannerTest {
 		assertEquals(t.line,0);
 	}
 	
+	/*Test keywords, need special case for testing*/
+	@Test
+	void testKeyWord() throws Exception {
+		Reader r = new StringReader("and break do else end false for function goto if");
+		Scanner s = new Scanner(r);
+		Token t;
+		show(t= s.getNext());
+		assertEquals(t.kind,KW_and);
+		assertEquals(t.text,"and");
+		assertEquals(t.pos,0);
+		assertEquals(t.line,0);
+		show(t = s.getNext());
+		assertEquals(t.kind,KW_break);
+		assertEquals(t.text,"break");
+		assertEquals(t.pos,4);
+		assertEquals(t.line,0);
+		show(t = s.getNext());
+		assertEquals(t.kind,KW_do);
+		assertEquals(t.text,"do");
+		assertEquals(t.pos,10);
+		assertEquals(t.line,0);
+		show(t = s.getNext());
+		assertEquals(t.kind,KW_else);
+		assertEquals(t.text,"else");
+		assertEquals(t.pos,13);
+		assertEquals(t.line,0);
+		show(t = s.getNext());
+		assertEquals(t.kind,KW_end);
+		assertEquals(t.text,"end");
+		assertEquals(t.pos,18);
+		assertEquals(t.line,0);
+		show(t = s.getNext());
+		assertEquals(t.kind,KW_false);
+		assertEquals(t.text,"false");
+		assertEquals(t.pos,22);
+		assertEquals(t.line,0);
+		show(t = s.getNext());
+		assertEquals(t.kind,KW_for);
+		assertEquals(t.text,"for");
+		assertEquals(t.pos,28);
+		assertEquals(t.line,0);
+		show(t = s.getNext());
+		assertEquals(t.kind,KW_function);
+		assertEquals(t.text,"function");
+		assertEquals(t.pos,32);
+		assertEquals(t.line,0);
+		show(t = s.getNext());
+		assertEquals(t.kind,KW_goto);
+		assertEquals(t.text,"goto");
+		assertEquals(t.pos,41);
+		assertEquals(t.line,0);
+		show(t = s.getNext());
+		assertEquals(t.kind,KW_if);
+		assertEquals(t.text,"if");
+		assertEquals(t.pos,46);
+		assertEquals(t.line,0);
+	}
+	
 	
 	
 
