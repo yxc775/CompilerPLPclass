@@ -411,6 +411,76 @@ class ScannerTest {
 		assertEquals(t.line,0);
 	}
 	
+	/*Test Naming, need special case for testing*/
+	@Test
+	void testNaming() throws Exception {
+		Reader r = new StringReader("andwsadas asskda sif");
+		Scanner s = new Scanner(r);
+		Token t;
+		show(t= s.getNext());
+		assertEquals(t.kind,NAME);
+		assertEquals(t.text,"andwsadas");
+		assertEquals(t.pos,0);
+		assertEquals(t.line,0);
+		
+		show(t= s.getNext());
+		assertEquals(t.kind,NAME);
+		assertEquals(t.text,"asskda");
+		assertEquals(t.pos,10);
+		assertEquals(t.line,0);
+		
+		show(t= s.getNext());
+		assertEquals(t.kind,NAME);
+		assertEquals(t.text,"sif");
+		assertEquals(t.pos,17);
+		assertEquals(t.line,0);
+	}
+	
+	/*Test INT, need special case for testing*/
+	@Test
+	void testINT() throws Exception {
+		Reader r = new StringReader("12345678 123");
+		Scanner s = new Scanner(r);
+		Token t;
+		show(t= s.getNext());
+		assertEquals(t.kind,INTLIT);
+		assertEquals(t.text,"12345678");
+		assertEquals(t.pos,0);
+		assertEquals(t.line,0);
+		show(t= s.getNext());
+		assertEquals(t.kind,INTLIT);
+		assertEquals(t.text,"123");
+		assertEquals(t.pos,9);
+		assertEquals(t.line,0);
+	}
+	
+	/*Test INT, need special case for testing*/
+	@Test
+	void testINTExcep() throws Exception {
+		Reader r = new StringReader("123456781213123123123223");
+		Scanner s = new Scanner(r);
+		Token t;
+        assertThrows(LexicalException.class, ()->{
+		   s.getNext();
+        });
+	}
+	
+	/*Test comment handling*/
+	@Test
+	void testSKIPCOMMENT() throws Exception {
+		Reader r = new StringReader("--i am genius 213123\n xxx");
+		Scanner s = new Scanner(r);
+		Token t;
+		show(t= s.getNext());
+		assertEquals(t.kind,NAME);
+		assertEquals(t.text,"xxx");
+		assertEquals(t.pos,1);
+		assertEquals(t.line,1);
+	}
+	
+	
+	
+	
 	
 	
 

@@ -29,12 +29,12 @@ public class Scanner {
 	int curlines = 0;
 	private enum State{
 		START,
-		//state below for Name
-		IS_NAME,
 		//state below for operations
-		HAVE_EQ,HAVE_COLLON,HAVE_XOR,HAVE_DIV,HAVE_LESS,HAVE_GREA,HAVE_DOT,HAVE_DOTDOT,
-		//state below for NUMLIT and 
+		HAVE_DASH,HAVE_EQ,HAVE_COLLON,HAVE_XOR,HAVE_DIV,HAVE_LESS,HAVE_GREA,HAVE_DOT,HAVE_DOTDOT,
+		//state below for NUMLIT and INDENTIFIER
 		IN_NUMLIT,IN_IDENT,
+		//state below to point that the comment situation
+		IN_COMMENT,COMMENT_END,
 		END;
 	}
 
@@ -71,7 +71,7 @@ public class Scanner {
 				getchar();
 			}
 			if(!isExpectedChar() && ch != -1) {
-				 throw new LexicalException("Illegal character read: " + ch);  
+				 throw new LexicalException("Illegal character read: " + ch + " at " + "line " + curlines +" " + curpos);  
 			}
 			
 			boolean afterElsei = false;
@@ -91,10 +91,6 @@ public class Scanner {
 						switch(ch) {
 						case '+':
 							out = new Token(OP_PLUS, "+", pos, line);
-							getchar();
-							break;
-						case '-':
-							out = new Token(OP_MINUS, "-", pos, line);
 							getchar();
 							break;
 						case '*':
@@ -122,7 +118,6 @@ public class Scanner {
 							getchar();
 							break;
 						case '~':
-							
 							state = State.HAVE_XOR;
 							sb.append('~');
 							getchar();
@@ -194,6 +189,11 @@ public class Scanner {
 							sb.append('.');
 							getchar();
 							break;
+						case '-':
+							state = State.HAVE_DASH;
+							sb.append('-');
+							getchar();
+							break;
 						case '0': 
 							out = new Token(INTLIT,"0",pos,line);
 							getchar();
@@ -215,9 +215,19 @@ public class Scanner {
 								 break;
 								 }              
 							 else { 
-								 throw new LexicalException("Illegal first character read!");  
+								 throw new LexicalException("Illegal first character read: " + ch + " at " + "line " + curlines +" " + curpos);  
 								 }          
 							 }
+						break;
+					case HAVE_DASH:
+						if((char)this.ch == '-') {
+							state = State.IN_COMMENT;
+							sb = new StringBuilder();
+							getchar();
+						}
+						else {
+							out = new Token(OP_MINUS, sb.toString(), pos, line);
+						}
 						break;
 					case HAVE_DOT:
 						if((char)this.ch == '.') {
@@ -310,25 +320,56 @@ public class Scanner {
 						}
 						break;
 					case IN_NUMLIT:
+						if(Character.isDigit(ch)){
+							sb.append((char)this.ch);
+							getchar();
+						}
+						else {
+							try {
+								Integer.parseInt(sb.toString());
+							}
+							catch(NumberFormatException e) {
+								throw new LexicalException("input int number out of the scope " + sb.toString()); 
+							}
+							out = new Token(INTLIT,sb.toString(),pos,line);
+						}
+						
 						break;
 					case IN_IDENT:
 						if(isLegalPart()){
 							sb.append((char)this.ch);
 							getchar();
 						}
-						else if(isLineSpacing() || ch == -1){
+						else {
 							Token temp = checkKeyWord(sb.toString(),pos,line);
-							out = new Token(NAME,sb.toString(),pos,line);
 							getchar();
 							if(temp != null) {
 								return temp;
 							}
 							else {
-								return out;
+								return new Token(NAME,sb.toString(),pos,line);
 							}
 						}
+						break;
+					case IN_COMMENT:
+						if(this.ch == '\n') {
+							state = State.START;
+							this.curlines ++;
+							this.curpos = -1;
+						}
+						else if(this.ch == '\r') {
+							state = State.COMMENT_END;
+							this.curlines ++;
+							this.curpos = -1;
+						}
 						else {
-							throw new LexicalException("Illegal character read: " + ch + " pos " +pos + " line " + line + " during identifier unpacking!");
+						}
+						getchar();
+						break;
+					case COMMENT_END:
+						state = State.START;
+						if(this.ch == '\n') {
+							getchar();
 						}
 						break;
 					case END:
@@ -356,7 +397,7 @@ public class Scanner {
 				ch ==  '\t' || 
 				ch == '\\' ||
 				ch ==  '\"' ||
-				ch == '\'';
+				ch == '\'' || ch == '\u0007';
 	}
 	
 	public boolean isOP() {
@@ -386,6 +427,7 @@ public class Scanner {
 		}
 		reachR = false;
 	}
+	
 	
 	public boolean isLineSpacing() throws IOException {
 		if((char)this.ch == ' ' || (char)this.ch == '\t' || (char)this.ch == '\f' || isLineter()) {	
