@@ -34,8 +34,6 @@ class ScannerTest {
 			System.out.println(input.toString());
 		}
 	}
-	
-	
 
 	 /**
 	  * Example showing how to get input from a Java string literal.
@@ -138,6 +136,20 @@ class ScannerTest {
 	@Test
 	void testSpacing() throws Exception {
 		Reader r = new StringReader("\r\n,");
+		Scanner s = new Scanner(r);
+		Token t;
+		show(t= s.getNext());
+		assertEquals(t.kind,COMMA);
+		assertEquals(t.text,",");
+		assertEquals(t.pos,0);
+		assertEquals(t.line,1);
+		
+	}
+	
+	/*test reline using normal \n*/
+	@Test
+	void testSpacingNormal() throws Exception {
+		Reader r = new StringReader("\n,");
 		Scanner s = new Scanner(r);
 		Token t;
 		show(t= s.getNext());
@@ -459,7 +471,6 @@ class ScannerTest {
 	void testINTExcep() throws Exception {
 		Reader r = new StringReader("123456781213123123123223");
 		Scanner s = new Scanner(r);
-		Token t;
         assertThrows(LexicalException.class, ()->{
 		   s.getNext();
         });
@@ -476,7 +487,77 @@ class ScannerTest {
 		assertEquals(t.text,"xxx");
 		assertEquals(t.pos,1);
 		assertEquals(t.line,1);
+		
+		r = new StringReader("--i am genius 213123\r\n xxx");
+		s = new Scanner(r);
+		show(t= s.getNext());
+		assertEquals(t.kind,NAME);
+		assertEquals(t.text,"xxx");
+		assertEquals(t.pos,1);
+		assertEquals(t.line,1);
 	}
+	
+	/*Test STRINGLIT handling*/
+	@Test
+	void testStringLit() throws Exception{
+		Reader r = new StringReader("\"hello\"");
+		Scanner s = new Scanner(r);
+		Token t;
+		show(t= s.getNext());
+		assertEquals(t.kind,STRINGLIT);
+		assertEquals(t.text,"hello");
+		assertEquals(t.pos,0);
+		assertEquals(t.line,0);
+        
+        r = new StringReader("\"hello\r\nabc\"+");
+        Token t2;
+        s = new Scanner(r);
+		show(t2= s.getNext());
+		assertEquals(t2.kind,STRINGLIT);
+		assertEquals(t2.text,"hello\r\nabc");
+		assertEquals(t2.pos,0);
+		assertEquals(t2.line,0);
+		
+		show(t2= s.getNext());
+		assertEquals(t2.kind,OP_PLUS);
+		assertEquals(t2.text,"+");
+		assertEquals(t2.pos,5);
+		assertEquals(t2.line,1);
+		
+        r = new StringReader("\"hello\nabc\"+");
+        Token t3;
+        s = new Scanner(r);
+		show(t3= s.getNext());
+		assertEquals(t3.kind,STRINGLIT);
+		assertEquals(t3.text,"hello\nabc");
+		assertEquals(t3.pos,0);
+		assertEquals(t3.line,0);
+		
+		show(t3= s.getNext());
+		assertEquals(t3.kind,OP_PLUS);
+		assertEquals(t3.text,"+");
+		assertEquals(t3.pos,5);
+		assertEquals(t3.line,1);
+		
+		r = new StringReader("\"hel\"lo\"");
+		Scanner s2 = new Scanner(r);
+		Token t4;
+		show(t4 = s2.getNext());
+		assertEquals(t4.kind,STRINGLIT);
+		show(t4 = s2.getNext());
+		assertEquals(t4.kind,NAME);
+        assertThrows(LexicalException.class, ()->{
+		   s2.getNext();
+        });
+        
+		r = new StringReader("\"hel\'lo\"");
+		Scanner s3 = new Scanner(r);
+        assertThrows(LexicalException.class, ()->{
+		   s3.getNext();
+        });
+        
+	}
+	
 	
 	
 	

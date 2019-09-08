@@ -24,6 +24,8 @@ import java.io.Reader;
 public class Scanner {
 	Reader r;
 	boolean isEnded;
+	boolean beforeisreline = false;
+	
 	int ch = -1;
 	int curpos = -1;
 	int curlines = 0;
@@ -31,10 +33,11 @@ public class Scanner {
 		START,
 		//state below for operations
 		HAVE_DASH,HAVE_EQ,HAVE_COLLON,HAVE_XOR,HAVE_DIV,HAVE_LESS,HAVE_GREA,HAVE_DOT,HAVE_DOTDOT,
-		//state below for NUMLIT and INDENTIFIER
-		IN_NUMLIT,IN_IDENT,
+		//state below for NUMLIT and INDENTIFIER and STRING
+		IN_NUMLIT,IN_IDENT,IN_STRING,
 		//state below to point that the comment situation
 		IN_COMMENT,COMMENT_END,
+		
 		END;
 	}
 
@@ -65,19 +68,12 @@ public class Scanner {
 			Token out = null;
 			State state = State.START;
 			StringBuilder sb = new StringBuilder();
-			String trackerKey = "";
-			int trackInxKey = 0;
+			char returnSymbol = '\"';
 			if(ch < 0) {
 				getchar();
 			}
-			if(!isExpectedChar() && ch != -1) {
+			if(ch >= 128) {
 				 throw new LexicalException("Illegal character read: " + ch + " at " + "line " + curlines +" " + curpos);  
-			}
-			
-			boolean afterElsei = false;
-			if(afterElsei) {
-				sb.append("i");
-				afterElsei = false;
 			}
 			
 			int pos = -1;
@@ -192,6 +188,16 @@ public class Scanner {
 						case '-':
 							state = State.HAVE_DASH;
 							sb.append('-');
+							getchar();
+							break;
+						case '\"':
+							state = State.IN_STRING;
+							returnSymbol = '\"';
+							getchar();
+							break;
+						case '\'':
+							state = State.IN_STRING;
+							returnSymbol = '\'';
 							getchar();
 							break;
 						case '0': 
@@ -319,6 +325,43 @@ public class Scanner {
 							out = new Token(COLON,sb.toString(),pos, line);
 						}
 						break;
+					case IN_STRING:
+						if(ch >= 0 && ch < 128 && ((char) ch != returnSymbol) && (char)ch != '\\'){
+							if((char)this.ch == '\r') {
+								this.curlines ++;
+								this.curpos = 0;
+								beforeisreline = true;
+							}
+							else if((char)this.ch == '\n') {
+								if(beforeisreline) {
+									beforeisreline = false;
+								}
+								else {
+									this.curlines ++;
+								}
+								this.curpos = 0;
+							}
+							else {
+								beforeisreline = false;
+							}
+							
+							if((char)ch == '\"' || (char)ch == '\'') {
+								throw new LexicalException("unreturn quotation escape sequence detected " + ch);
+							}
+							
+							sb.append((char)this.ch);
+						}
+						else if((char)ch == returnSymbol){
+							out = new Token(STRINGLIT,sb.toString(),pos,line);
+						}
+						else if((char)ch == '\\'){
+							throw new LexicalException("illegal escape sequence detected " + ch);	
+						}
+						else{
+							throw new LexicalException("illegal ASCII character detected " + ch);
+						}
+						getchar();
+						break;
 					case IN_NUMLIT:
 						if(Character.isDigit(ch)){
 							sb.append((char)this.ch);
@@ -342,12 +385,11 @@ public class Scanner {
 						}
 						else {
 							Token temp = checkKeyWord(sb.toString(),pos,line);
-							getchar();
 							if(temp != null) {
-								return temp;
+								out = temp;
 							}
 							else {
-								return new Token(NAME,sb.toString(),pos,line);
+								out =  new Token(NAME,sb.toString(),pos,line);
 							}
 						}
 						break;
@@ -360,7 +402,6 @@ public class Scanner {
 						else if(this.ch == '\r') {
 							state = State.COMMENT_END;
 							this.curlines ++;
-							this.curpos = -1;
 						}
 						else {
 						}
@@ -368,6 +409,7 @@ public class Scanner {
 						break;
 					case COMMENT_END:
 						state = State.START;
+						this.curpos = -1;
 						if(this.ch == '\n') {
 							getchar();
 						}
@@ -385,6 +427,8 @@ public class Scanner {
 	public boolean isExpectedChar() throws IOException {
 		return isLegalPart() || isOP() || isLineSpacing() || isEscapeSe();
 	} 
+	
+	
 	
 	
 	public boolean isLegalPart() {
