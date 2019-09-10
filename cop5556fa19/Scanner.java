@@ -193,11 +193,13 @@ public class Scanner {
 						case '\"':
 							state = State.IN_STRING;
 							returnSymbol = '\"';
+							sb.append('\"');
 							getchar();
 							break;
 						case '\'':
 							state = State.IN_STRING;
 							returnSymbol = '\'';
+							sb.append('\'');
 							getchar();
 							break;
 						case '0': 
@@ -352,6 +354,7 @@ public class Scanner {
 							sb.append((char)this.ch);
 						}
 						else if((char)ch == returnSymbol){
+							sb.append(returnSymbol);
 							out = new Token(STRINGLIT,sb.toString(),pos,line);
 						}
 						else if((char)ch == '\\'){
