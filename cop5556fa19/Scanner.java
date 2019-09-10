@@ -69,6 +69,7 @@ public class Scanner {
 			State state = State.START;
 			StringBuilder sb = new StringBuilder();
 			char returnSymbol = '\"';
+			boolean isEscaping = false;
 			if(ch < 0) {
 				getchar();
 			}
@@ -328,37 +329,30 @@ public class Scanner {
 						}
 						break;
 					case IN_STRING:
-						if(ch >= 0 && ch < 128 && ((char) ch != returnSymbol) && (char)ch != '\\'){
-							if((char)this.ch == '\r') {
-								this.curlines ++;
-								this.curpos = 0;
-								beforeisreline = true;
-							}
-							else if((char)this.ch == '\n') {
-								if(beforeisreline) {
-									beforeisreline = false;
-								}
-								else {
-									this.curlines ++;
-								}
-								this.curpos = 0;
-							}
-							else {
-								beforeisreline = false;
-							}
-							
+						if((ch >= 0 && ch < 128) && ((char) ch != returnSymbol) ){
 							if((char)ch == '\"' || (char)ch == '\'') {
 								throw new LexicalException("unreturn quotation escape sequence detected " + ch);
 							}
 							
-							sb.append((char)this.ch);
+							if(isEscaping) {
+								if(isEscapeSe()) {
+									isEscaping = false;
+									sb.append((char)this.ch);
+								}
+								else {
+									throw new LexicalException("illegal escape sequence " + ch);
+								}
+							}
+							else {							
+								if(this.ch == '\\') {
+									isEscaping = true;
+								}
+								sb.append((char)this.ch);
+							}
 						}
 						else if((char)ch == returnSymbol){
 							sb.append(returnSymbol);
 							out = new Token(STRINGLIT,sb.toString(),pos,line);
-						}
-						else if((char)ch == '\\'){
-							throw new LexicalException("illegal escape sequence detected " + ch);	
 						}
 						else{
 							throw new LexicalException("illegal ASCII character detected " + ch);
@@ -439,13 +433,15 @@ public class Scanner {
 	}
 	
 	public boolean isEscapeSe() {
-		return  ch == '\b' || ch == '\f' || ch == '\n' ||
-				ch == '\r' ||
-				ch ==  '\t' || 
+		return  ch == 'a' || ch == 'b' || ch == 'f' || ch == 'n' ||
+				ch == 'r' ||
+				ch ==  't' || 
+				ch == 'v' ||
 				ch == '\\' ||
 				ch ==  '\"' ||
-				ch == '\'' || ch == '\u0007';
+				ch == '\'';
 	}
+	
 	
 	public boolean isOP() {
 		return ch ==  '+'  || ch == '-'  || ch ==  '*' || ch == '/'|| ch == '%' || ch ==  '^'|| ch == '#'

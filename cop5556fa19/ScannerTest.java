@@ -509,35 +509,35 @@ class ScannerTest {
 		assertEquals(t.pos,0);
 		assertEquals(t.line,0);
         
-        r = new StringReader("\"hello\r\nabc\"+");
+        r = new StringReader("\"hello\\r\\nabc\"+");
         Token t2;
         s = new Scanner(r);
 		show(t2= s.getNext());
 		assertEquals(t2.kind,STRINGLIT);
-		assertEquals(t2.text,"\"hello\r\nabc\"");
+		assertEquals(t2.text,"\"hello\\r\\nabc\"");
 		assertEquals(t2.pos,0);
 		assertEquals(t2.line,0);
 		
 		show(t2= s.getNext());
 		assertEquals(t2.kind,OP_PLUS);
 		assertEquals(t2.text,"+");
-		assertEquals(t2.pos,5);
-		assertEquals(t2.line,1);
+		assertEquals(t2.pos,14);
+		assertEquals(t2.line,0);
 		
-        r = new StringReader("\"hello\nabc\"+");
+        r = new StringReader("\"hello\\nabc\"+");
         Token t3;
         s = new Scanner(r);
 		show(t3= s.getNext());
 		assertEquals(t3.kind,STRINGLIT);
-		assertEquals(t3.text,"\"hello\nabc\"");
+		assertEquals(t3.text,"\"hello\\nabc\"");
 		assertEquals(t3.pos,0);
 		assertEquals(t3.line,0);
 		
 		show(t3= s.getNext());
 		assertEquals(t3.kind,OP_PLUS);
 		assertEquals(t3.text,"+");
-		assertEquals(t3.pos,5);
-		assertEquals(t3.line,1);
+		assertEquals(t3.pos,12);
+		assertEquals(t3.line,0);
 		
 		r = new StringReader("\"hel\"lo\"");
 		Scanner s2 = new Scanner(r);
@@ -558,6 +558,260 @@ class ScannerTest {
         
 	}
 	
+	/*Combination test, a normal input strings with all kinds of Token mixed*/
+	@Test
+	void testAll() throws Exception {
+		Reader r = new StringReader("while I am a pig, 2345 -- dont read here\n 123 + 4 = 5"
+				+ " Maybe \nand if elseif. \"Damage down piggy bobo\"\r\nYes");
+		Scanner s = new Scanner(r);
+		Token t;
+		show(t= s.getNext());
+		assertEquals(t.kind,KW_while);
+		assertEquals(t.text,"while");
+		assertEquals(t.pos,0);
+		assertEquals(t.line,0);
+		
+		show(t= s.getNext());
+		assertEquals(t.kind,NAME);
+		assertEquals(t.text,"I");
+		assertEquals(t.pos, 6);
+		assertEquals(t.line, 0);
+		
+		show(t= s.getNext());
+		assertEquals(t.kind,NAME);
+		assertEquals(t.text,"am");
+		assertEquals(t.pos,8);
+		assertEquals(t.line,0);
+		
+		show(t= s.getNext());
+		assertEquals(t.kind,NAME);
+		assertEquals(t.text,"a");
+		assertEquals(t.pos,11);
+		assertEquals(t.line,0);
+		
+		show(t= s.getNext());
+		assertEquals(t.kind,NAME);
+		assertEquals(t.text,"pig");
+		assertEquals(t.pos,13);
+		assertEquals(t.line,0);
+		
+		show(t= s.getNext());
+		assertEquals(t.kind,COMMA);
+		assertEquals(t.text,",");
+		assertEquals(t.pos,16);
+		assertEquals(t.line,0);
+		
+		show(t= s.getNext());
+		assertEquals(t.kind,INTLIT);
+		assertEquals(t.text,"2345");
+		assertEquals(t.pos,18);
+		assertEquals(t.line,0);
+		
+		show(t= s.getNext());
+		assertEquals(t.kind,INTLIT);
+		assertEquals(t.text,"123");
+		assertEquals(t.pos,1);
+		assertEquals(t.line,1);
+		
+		show(t= s.getNext());
+		assertEquals(t.kind,OP_PLUS);
+		assertEquals(t.text,"+");
+		assertEquals(t.pos,5);
+		assertEquals(t.line,1);
+		
+		show(t= s.getNext());
+		assertEquals(t.kind,INTLIT);
+		assertEquals(t.text,"4");
+		assertEquals(t.pos,7);
+		assertEquals(t.line,1);
+		
+		show(t= s.getNext());
+		assertEquals(t.kind,ASSIGN);
+		assertEquals(t.text,"=");
+		assertEquals(t.pos,9);
+		assertEquals(t.line,1);
+		
+		show(t= s.getNext());
+		assertEquals(t.kind,INTLIT);
+		assertEquals(t.text,"5");
+		assertEquals(t.pos,11);
+		assertEquals(t.line,1);
+		
+		show(t= s.getNext());
+		assertEquals(t.kind,NAME);
+		assertEquals(t.text,"Maybe");
+		assertEquals(t.pos,13);
+		assertEquals(t.line,1);
+		
+		show(t= s.getNext());
+		assertEquals(t.kind,KW_and);
+		assertEquals(t.text,"and");
+		assertEquals(t.pos,0);
+		assertEquals(t.line,2);
+		
+		show(t= s.getNext());
+		assertEquals(t.kind,KW_if);
+		assertEquals(t.text,"if");
+		assertEquals(t.pos,4);
+		assertEquals(t.line,2);
+		
+		show(t= s.getNext());
+		assertEquals(t.kind,KW_elseif);
+		assertEquals(t.text,"elseif");
+		assertEquals(t.pos,7);
+		assertEquals(t.line,2);
+		
+		show(t= s.getNext());
+		assertEquals(t.kind,DOT);
+		assertEquals(t.text,".");
+		assertEquals(t.pos,13);
+		assertEquals(t.line,2);
+		
+		show(t= s.getNext());
+		assertEquals(t.kind,STRINGLIT);
+		assertEquals(t.text,"\"Damage down piggy bobo\"");
+		assertEquals(t.pos,15);
+		assertEquals(t.line,2);
+		
+		show(t= s.getNext());
+		assertEquals(t.kind,NAME);
+		assertEquals(t.text,"Yes");
+		assertEquals(t.pos,0);
+		assertEquals(t.line,3);	
+	}
+	
+	/*TRY TO BREAK IT TEST,try to as confused as possible*/
+	@Test
+	void testToChallenge() throws Exception {
+		Reader r = new StringReader("==== ~~= elseif elseinonoIamkidding\r\n01001 ... .. . 1+1=2 ......... abc\rcba");
+		Token t;
+		Scanner s = new Scanner(r);
+		show(t= s.getNext());
+		assertEquals(t.kind,REL_EQEQ);
+		assertEquals(t.text,"==");
+		assertEquals(t.pos,0);
+		assertEquals(t.line,0);	
+		
+		show(t= s.getNext());
+		assertEquals(t.kind,REL_EQEQ);
+		assertEquals(t.text,"==");
+		assertEquals(t.pos,2);
+		assertEquals(t.line,0);	
+		
+		show(t= s.getNext());
+		assertEquals(t.kind,BIT_XOR);
+		assertEquals(t.text,"~");
+		assertEquals(t.pos,5);
+		assertEquals(t.line,0);	
+		
+		show(t= s.getNext());
+		assertEquals(t.kind,REL_NOTEQ);
+		assertEquals(t.text,"~=");
+		assertEquals(t.pos,6);
+		assertEquals(t.line,0);	
+		
+		show(t= s.getNext());
+		assertEquals(t.kind,KW_elseif);
+		assertEquals(t.text,"elseif");
+		assertEquals(t.pos,9);
+		assertEquals(t.line,0);	
+		
+		show(t= s.getNext());
+		assertEquals(t.kind,NAME);
+		assertEquals(t.text,"elseinonoIamkidding");
+		assertEquals(t.pos,16);
+		assertEquals(t.line,0);	
+		
+		show(t= s.getNext());
+		assertEquals(t.kind,INTLIT);
+		assertEquals(t.text,"0");
+		assertEquals(t.pos,0);
+		assertEquals(t.line,1);	
+		
+		show(t= s.getNext());
+		assertEquals(t.kind,INTLIT);
+		assertEquals(t.text,"1001");
+		assertEquals(t.pos,1);
+		assertEquals(t.line,1);	
+		
+		show(t= s.getNext());
+		assertEquals(t.kind,DOTDOTDOT);
+		assertEquals(t.text,"...");
+		assertEquals(t.pos,6);
+		assertEquals(t.line,1);	
+		
+		show(t= s.getNext());
+		assertEquals(t.kind,DOTDOT);
+		assertEquals(t.text,"..");
+		assertEquals(t.pos,10);
+		assertEquals(t.line,1);	
+		
+		show(t= s.getNext());
+		assertEquals(t.kind,DOT);
+		assertEquals(t.text,".");
+		assertEquals(t.pos,13);
+		assertEquals(t.line,1);	
+		
+		show(t= s.getNext());
+		assertEquals(t.kind,INTLIT);
+		assertEquals(t.text,"1");
+		assertEquals(t.pos,15);
+		assertEquals(t.line,1);	
+		
+		show(t= s.getNext());
+		assertEquals(t.kind,OP_PLUS);
+		assertEquals(t.text,"+");
+		assertEquals(t.pos,16);
+		assertEquals(t.line,1);	
+		
+		show(t= s.getNext());
+		assertEquals(t.kind,INTLIT);
+		assertEquals(t.text,"1");
+		assertEquals(t.pos,17);
+		assertEquals(t.line,1);	
+		
+		show(t= s.getNext());
+		assertEquals(t.kind,ASSIGN);
+		assertEquals(t.text,"=");
+		assertEquals(t.pos,18);
+		assertEquals(t.line,1);	
+		
+		show(t= s.getNext());
+		assertEquals(t.kind,INTLIT);
+		assertEquals(t.text,"2");
+		assertEquals(t.pos,19);
+		assertEquals(t.line,1);	
+		
+		show(t= s.getNext());
+		assertEquals(t.kind,DOTDOTDOT);
+		assertEquals(t.text,"...");
+		assertEquals(t.pos,21);
+		assertEquals(t.line,1);	
+		
+		show(t= s.getNext());
+		assertEquals(t.kind,DOTDOTDOT);
+		assertEquals(t.text,"...");
+		assertEquals(t.pos,24);
+		assertEquals(t.line,1);	
+		
+		show(t= s.getNext());
+		assertEquals(t.kind,DOTDOTDOT);
+		assertEquals(t.text,"...");
+		assertEquals(t.pos,27);
+		assertEquals(t.line,1);	
+		
+		show(t= s.getNext());
+		assertEquals(t.kind,NAME);
+		assertEquals(t.text,"abc");
+		assertEquals(t.pos,31);
+		assertEquals(t.line,1);	
+		
+		show(t= s.getNext());
+		assertEquals(t.kind,NAME);
+		assertEquals(t.text,"cba");
+		assertEquals(t.pos,0);
+		assertEquals(t.line,2);	
+	}
 	
 	
 	
