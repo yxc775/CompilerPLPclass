@@ -556,6 +556,12 @@ class ScannerTest {
 		   s3.getNext();
         });
         
+		r = new StringReader("\"hello");
+		Scanner s4 = new Scanner(r);
+        assertThrows(LexicalException.class, ()->{
+		   s4.getNext();
+        });
+        
 	}
 	
 	/*Combination test, a normal input strings with all kinds of Token mixed*/
