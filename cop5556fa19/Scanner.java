@@ -348,6 +348,11 @@ public class Scanner {
 								if(this.ch == '\\') {
 									isEscaping = true;
 								}
+								
+								if(isillegalEscapeChar()) {
+									throw new LexicalException("illegal escape operations within String parser " + (int)ch);
+								}
+
 								sb.append((char)this.ch);
 							}
 						}
@@ -435,6 +440,10 @@ public class Scanner {
 				ch == '\\' ||
 				ch ==  '\"' ||
 				ch == '\'';
+	}
+	
+	public boolean isillegalEscapeChar() {
+		return  ch == '\t'||ch == '\b' || ch == '\n' || ch == '\r' || ch == '\f';
 	}
 	
 	public void skipwhiteSpace() throws IOException{

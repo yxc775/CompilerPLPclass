@@ -582,7 +582,17 @@ class ScannerTest {
 		   s5.getNext();
         });
         
+		r = new StringReader("\"hel\nlo\" +");
+		Scanner s6 = new Scanner(r);
+        assertThrows(LexicalException.class, ()->{
+		   s6.getNext();
+        });
         
+		r = new StringReader("\"hel\rlo\" +");
+		Scanner s7 = new Scanner(r);
+        assertThrows(LexicalException.class, ()->{
+		   s7.getNext();
+        });
 	}
 	
 	/*Combination test, a normal input strings with all kinds of Token mixed*/
