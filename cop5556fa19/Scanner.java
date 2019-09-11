@@ -349,8 +349,11 @@ public class Scanner {
 									isEscaping = true;
 								}
 								
-								if(isillegalEscapeChar()) {
-									throw new LexicalException("illegal escape operations within String parser " + (int)ch);
+								if(isEscapeChar()) {
+									if(isLineter()) {
+										this.curpos = -1;
+										this.curlines ++;
+									}
 								}
 
 								sb.append((char)this.ch);
@@ -442,7 +445,7 @@ public class Scanner {
 				ch == '\'';
 	}
 	
-	public boolean isillegalEscapeChar() {
+	public boolean isEscapeChar() {
 		return  ch == '\t'||ch == '\b' || ch == '\n' || ch == '\r' || ch == '\f';
 	}
 	
