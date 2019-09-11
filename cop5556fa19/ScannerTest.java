@@ -92,7 +92,7 @@ class ScannerTest {
 	 */
 	@Test
 	void testOPMulti() throws Exception {
-		Reader r = new StringReader(",,::==");
+		Reader r = new StringReader(",,::==;");
 		Scanner s = new Scanner(r);
 		Token t;
 		show(t= s.getNext());
@@ -109,6 +109,13 @@ class ScannerTest {
 		show(t = s.getNext());
 		assertEquals(t.kind,REL_EQEQ);
 		assertEquals(t.text,"==");
+		
+		show(t = s.getNext());
+		assertEquals(t.kind,SEMI);
+		assertEquals(t.text,";");
+		assertEquals(t.pos,6);
+		assertEquals(t.line,0);
+		
 	}
 	/*Can distinguish single and double, eg: COLON vs COLONCOLON*/
 	@Test
@@ -500,13 +507,19 @@ class ScannerTest {
 	/*Test STRINGLIT handling*/
 	@Test
 	void testStringLit() throws Exception{
-		Reader r = new StringReader("\"hello\"");
+		Reader r = new StringReader("\"hello\"\'hello\'");
 		Scanner s = new Scanner(r);
 		Token t;
 		show(t= s.getNext());
 		assertEquals(t.kind,STRINGLIT);
 		assertEquals(t.text,"\"hello\"");
 		assertEquals(t.pos,0);
+		assertEquals(t.line,0);
+		
+		show(t= s.getNext());
+		assertEquals(t.kind,STRINGLIT);
+		assertEquals(t.text,"\'hello\'");
+		assertEquals(t.pos,7);
 		assertEquals(t.line,0);
         
         r = new StringReader("\"hello\\r\\nabc\"+");
@@ -561,6 +574,14 @@ class ScannerTest {
         assertThrows(LexicalException.class, ()->{
 		   s4.getNext();
         });
+        
+        
+		r = new StringReader("\"hel\\8989lo\"");
+		Scanner s5 = new Scanner(r);
+        assertThrows(LexicalException.class, ()->{
+		   s5.getNext();
+        });
+        
         
 	}
 	

@@ -73,8 +73,9 @@ public class Scanner {
 			if(ch < 0) {
 				getchar();
 			}
-			if(ch >= 128) {
-				 throw new LexicalException("Illegal character read: " + ch + " at " + "line " + curlines +" " + curpos);  
+			if(ch >= 128 || ch < -1) {
+				System.out.println(ch);
+				throw new LexicalException("Illegal character read: " + ch + " at " + "line " + curlines +" " + curpos);  
 			}
 			
 			int pos = -1;
@@ -421,12 +422,6 @@ public class Scanner {
 	}
 	
 	
-	public boolean isExpectedChar() throws IOException {
-		return isLegalPart() || isOP() || isLineSpacing() || isEscapeSe();
-	} 
-	
-	
-	
 	
 	public boolean isLegalPart() {
 		return Character.isJavaIdentifierStart(ch) || Character.isDigit(ch) || (ch == '_') || (ch == '$');
@@ -440,14 +435,6 @@ public class Scanner {
 				ch == '\\' ||
 				ch ==  '\"' ||
 				ch == '\'';
-	}
-	
-	
-	public boolean isOP() {
-		return ch ==  '+'  || ch == '-'  || ch ==  '*' || ch == '/'|| ch == '%' || ch ==  '^'|| ch == '#'
-			    || ch == '&'  || ch == '~' || ch == '|' || ch == '<' ||  ch ==  '>' || ch == '=' || ch == '~'  
-			     || ch == '('  || ch == ')'   ||  ch ==  '{' ||  ch == '}'  || ch == '['   || ch == ']'|| ch == ':' || ch == ';'  
-			     ||  ch == ',' ||  ch ==  '.';
 	}
 	
 	public void skipwhiteSpace() throws IOException{
