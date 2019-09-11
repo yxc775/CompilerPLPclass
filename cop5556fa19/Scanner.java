@@ -409,6 +409,9 @@ public class Scanner {
 							state = State.COMMENT_END;
 							this.curlines ++;
 						}
+						else if(this.ch == -1) {
+							throw new LexicalException("Comment without returning lineterminator " + sb.toString());
+						}
 						else {
 						}
 						getchar();

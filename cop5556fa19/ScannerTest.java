@@ -853,6 +853,54 @@ class ScannerTest {
 		assertEquals(t.line,2);	
 	}
 	
+	/*Test a sequence of char without space*/
+	@Test
+	void testNonSpaceExpression()  throws Exception{
+		Reader r = new StringReader("abs+-ji\n\"hello\"\r\nits boring ");
+		Scanner s = new Scanner(r);
+		Token t;
+		show(t= s.getNext()); 
+		assertEquals(t.kind,NAME);
+		assertEquals(t.text,"abs");
+		assertEquals(t.pos,0);
+		assertEquals(t.line,0);	
+		
+		show(t= s.getNext()); 
+		assertEquals(t.kind,OP_PLUS);
+		assertEquals(t.text,"+");
+		assertEquals(t.pos,3);
+		assertEquals(t.line,0);	
+		
+		show(t= s.getNext()); 
+		assertEquals(t.kind,OP_MINUS);
+		assertEquals(t.text,"-");
+		assertEquals(t.pos,4);
+		assertEquals(t.line,0);	
+		
+		show(t= s.getNext()); 
+		assertEquals(t.kind,NAME);
+		assertEquals(t.text,"ji");
+		assertEquals(t.pos,5);
+		assertEquals(t.line,0);	
+		
+		show(t= s.getNext()); 
+		assertEquals(t.kind,STRINGLIT);
+		assertEquals(t.text,"\"hello\"");
+		assertEquals(t.pos,0);
+		assertEquals(t.line,1);	
+		
+		show(t= s.getNext()); 
+		assertEquals(t.kind,NAME);
+		assertEquals(t.text,"its");
+		assertEquals(t.pos,0);
+		assertEquals(t.line,2);	
+		
+		show(t= s.getNext()); 
+		assertEquals(t.kind,NAME);
+		assertEquals(t.text,"boring");
+		assertEquals(t.pos,4);
+		assertEquals(t.line,2);	
+	}
 	
 	
 	
