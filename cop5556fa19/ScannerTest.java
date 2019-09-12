@@ -76,7 +76,8 @@ class ScannerTest {
 	 */
 	@Test
 	void testNULLFile() throws Exception {
-		String file = "testInputFiles\\test2.input"; 
+		//this reading is for linux
+		String file = "testInputFiles/test2.input"; 
 		Reader r = new BufferedReader(new FileReader(file));
 		Scanner s = new Scanner(r);
         assertThrows(LexicalException.class, ()->{
