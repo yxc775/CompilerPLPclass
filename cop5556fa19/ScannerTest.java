@@ -528,7 +528,7 @@ class ScannerTest {
         s = new Scanner(r);
 		show(t2= s.getNext());
 		assertEquals(t2.kind,STRINGLIT);
-		assertEquals(t2.text,"\"hello\\r\\nabc\"");
+		assertEquals(t2.text,"\"hello\r\nabc\"");
 		assertEquals(t2.pos,0);
 		assertEquals(t2.line,0);
 		
@@ -543,7 +543,7 @@ class ScannerTest {
         s = new Scanner(r);
 		show(t3= s.getNext());
 		assertEquals(t3.kind,STRINGLIT);
-		assertEquals(t3.text,"\"hello\\nabc\"");
+		assertEquals(t3.text,"\"hello\nabc\"");
 		assertEquals(t3.pos,0);
 		assertEquals(t3.line,0);
 		

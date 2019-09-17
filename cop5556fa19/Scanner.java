@@ -338,7 +338,8 @@ public class Scanner {
 							if(isEscaping) {
 								if(isEscapeSe()) {
 									isEscaping = false;
-									sb.append((char)this.ch);
+									
+									sb.append(converToEscape());
 								}
 								else {
 									throw new LexicalException("illegal escape sequence " + ch);
@@ -348,15 +349,15 @@ public class Scanner {
 								if(this.ch == '\\') {
 									isEscaping = true;
 								}
-								
-								if(isEscapeChar()) {
-									if(isLineter()) {
-										this.curpos = -1;
-										this.curlines ++;
+								else {
+									if(isEscapeChar()) {
+										if(isLineter()) {
+											this.curpos = -1;
+											this.curlines ++;
+										}
 									}
+									sb.append((char)this.ch);
 								}
-
-								sb.append((char)this.ch);
 							}
 						}
 						else if((char)ch == returnSymbol){
@@ -446,6 +447,39 @@ public class Scanner {
 				ch == '\\' ||
 				ch ==  '\"' ||
 				ch == '\'';
+	}
+	
+	public char converToEscape() {
+		if(this.ch == 'a') {
+			return '\u0007';
+		}
+		else if(this.ch == 'b') {
+			return '\u0008';
+		}
+		else if(this.ch == 'f') {
+			return '\u0012';
+		}
+		else if(this.ch == 'n') {
+			return '\n';
+		}
+		else if(this.ch == 'r') {
+			return '\r';
+		}
+		else if(this.ch == 't') {
+			return '\t';
+		}
+		else if(this.ch== 'v') {
+			return '\u0011';
+		}
+		else if(this.ch== '\\'){
+			return '\\';
+		}
+		else if(this.ch == '\"') {
+			return '\"';
+		}
+		else {
+			return '\'';
+		}
 	}
 	
 	public boolean isEscapeChar() {
