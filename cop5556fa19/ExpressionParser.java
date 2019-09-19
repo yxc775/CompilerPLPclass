@@ -63,13 +63,24 @@ public class ExpressionParser {
 
 	Exp exp() throws Exception {
 		Token first = t;
-		Exp e0 = andExp();
-		while (isKind(KW_or)) {
-			Token op = consume();
-			Exp e1 = andExp();
-			e0 = new ExpBinary(first, e0, op, e1);
+		if(isKind(KW_nil)) {
+			return new ExpNil(first);
 		}
-		return e0;
+		else if(isKind(KW_false)) {
+			return new ExpFalse(first);
+		}
+		else if(isKind(KW_true)) {
+			return new ExpTrue(first);
+		}
+		else {
+			Exp e0 = andExp();
+			while (isKind(KW_or)) {
+				Token op = consume();
+				Exp e1 = andExp();
+				e0 = new ExpBinary(first, e0, op, e1);
+			}
+			return e0;
+		}
 	}
 
 	
