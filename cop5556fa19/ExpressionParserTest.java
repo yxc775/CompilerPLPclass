@@ -104,8 +104,16 @@ class ExpressionParserTest {
 		Exp e = parseAndShow(input);
 		assertEquals(ExpFalse.class, e.getClass());
 	}
-
-
+	
+	@Test
+	void testBinaryor() throws Exception {
+		String input = "1 or 2";
+		Exp e = parseAndShow(input);
+		Exp expected = Expressions.makeBinary(1,KW_or,2);
+		show("expected="+expected);
+		assertEquals(expected,e);
+	}
+	
 	@Test
 	void testBinary0() throws Exception {
 		String input = "1 + 2";
@@ -139,11 +147,26 @@ class ExpressionParserTest {
 		String input = "\"concat\" .. \"is\"..\"right associative\"";
 		Exp e = parseAndShow(input);
 		Exp expected = Expressions.makeBinary(
-				Expressions.makeExpString("concat")
+				Expressions.makeExpString("\"concat\"")
 				, DOTDOT
-				, Expressions.makeBinary("is",DOTDOT,"right associative"));
+				, Expressions.makeBinary("\"is\"",DOTDOT,"\"right associative\""));
 		show("expected=" + expected);
 		assertEquals(expected,e);
+	}
+	
+	@Test
+	void testprecedence() throws Exception {
+		String input = "1 and 2 or 3";
+		Exp e = parseAndShow(input);
+		Exp expected = Expressions.makeBinary(
+				Expressions.makeBinary(
+						Expressions.makeInt(1)
+				, KW_and
+				, Expressions.makeInt(2)), KW_or, 
+				Expressions.makeInt(3));
+		show("expected=" + expected);
+		assertEquals(expected,e);
+		
 	}
 	
 	@Test
@@ -152,13 +175,23 @@ class ExpressionParserTest {
 		Exp e = parseAndShow(input);
 		Exp expected = Expressions.makeBinary(
 				Expressions.makeBinary(
-						Expressions.makeExpString("minus")
+						Expressions.makeExpString("\"minus\"")
 				, OP_MINUS
-				, Expressions.makeExpString("is")), OP_MINUS, 
-				Expressions.makeExpString("left associative"));
+				, Expressions.makeExpString("\"is\"")), OP_MINUS, 
+				Expressions.makeExpString("\"left associative\""));
 		show("expected=" + expected);
 		assertEquals(expected,e);
 		
 	}
-
+	
+	@Test
+	void testParenAssoc() throws Exception {
+		String input = "1 +(1+1)";
+		Exp e = parseAndShow(input);
+		Exp expected = Expressions.makeBinary(Expressions.makeInt(1), OP_PLUS,Expressions.makeBinary(
+				Expressions.makeInt(1),OP_PLUS,Expressions.makeInt(1)));
+		show("expected=" + expected);
+		assertEquals(expected,e);
+		
+	}
 }
