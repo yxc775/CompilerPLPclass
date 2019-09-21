@@ -63,24 +63,53 @@ public class ExpressionParser {
 
 	Exp exp() throws Exception {
 		Token first = t;
-		if(isKind(KW_nil)) {
-			return new ExpNil(first);
-		}
-		else if(isKind(KW_false)) {
-			return new ExpFalse(first);
-		}
-		else if(isKind(KW_true)) {
-			return new ExpTrue(first);
-		}
-		else {
-			Exp e0 = andExp();
+		Exp e0 = null;
+		switch(first.kind) {
+		case KW_nil:
+			consume();
+			e0 = new ExpNil(first);
+			break;
+		case KW_false:
+			consume();
+			e0 = new ExpFalse(first);
+			break;
+		
+		case KW_true:
+			consume();
+			e0 = new ExpTrue(first);
+			break;
+		case INTLIT:
+			consume();
+			e0 = new ExpInt(first);
+			break;
+		case STRINGLIT:
+			consume();
+			e0 = new ExpString(first);
+			break;
+		case NAME:
+			consume();
+			e0 = new ExpName(first);
+			break;
+		case LPAREN:
+			consume();
+			e0 = exp();
+			match(RPAREN);
+			break;
+		case DOTDOTDOT:
+			consume();
+			e0 = new ExpVarArgs(first);
+		case FUNCTION
+		default:
+			/*
+			e0 = andExp();
 			while (isKind(KW_or)) {
 				Token op = consume();
 				Exp e1 = andExp();
 				e0 = new ExpBinary(first, e0, op, e1);
-			}
-			return e0;
+			}*/
+			break;
 		}
+		return e0;
 	}
 
 	

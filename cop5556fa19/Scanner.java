@@ -454,10 +454,10 @@ public class Scanner {
 			return '\u0007';
 		}
 		else if(this.ch == 'b') {
-			return '\u0008';
+			return '\b';
 		}
 		else if(this.ch == 'f') {
-			return '\u0012';
+			return '\f';
 		}
 		else if(this.ch == 'n') {
 			return '\n';
@@ -469,7 +469,7 @@ public class Scanner {
 			return '\t';
 		}
 		else if(this.ch== 'v') {
-			return '\u0011';
+			return '\u2B7F';
 		}
 		else if(this.ch== '\\'){
 			return '\\';

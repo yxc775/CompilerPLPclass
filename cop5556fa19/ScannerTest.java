@@ -54,6 +54,17 @@ class ScannerTest {
 		show(t= s.getNext());
 		assertEquals(EOF, t.kind);
 	}
+	
+	@Test 
+	void testhw1TEST() throws Exception {
+		Reader r = new StringReader("\"\\aapple \\bbag \\ffood \\ttable\"");
+		Scanner s = new Scanner(r);
+		Token t;
+		show(t= s.getNext()); 
+		assertEquals(STRINGLIT, t.kind);
+		assertEquals("\u0007apple \bbag \ffood \ttable", t.getStringVal());
+	}
+	
 
 	/**
 	 * Example showing how to create a test case to ensure that an exception is thrown when illegal input is given.
