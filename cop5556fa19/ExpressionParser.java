@@ -42,6 +42,7 @@ import static cop5556fa19.Token.Kind.*;
 
 public class ExpressionParser {
 	
+	boolean namelistHasargs = false;
 	@SuppressWarnings("serial")
 	class SyntaxException extends Exception {
 		Token t;
@@ -61,13 +62,18 @@ public class ExpressionParser {
 	}
 	
 	
-	
 	List<Name> namelist() throws Exception{
 		List<Name> res = new ArrayList<>();
 		res.add(name());
 		while(isKind(COMMA)) {
 			consume();
-			res.add(name());
+			if(isKind(NAME)) {
+				res.add(name());
+			}
+			else if(isKind(DOTDOTDOT)) {
+				namelistHasargs = true;
+				break;
+			}
 		}
 		return res;
 	}
@@ -76,12 +82,12 @@ public class ExpressionParser {
 		Token first = t;
 		StringBuilder s = new StringBuilder();
 		if(isKind(NAME)) {
-			s.append(t.getName());
+			s.append(first.getName());
 			consume();
 			return new Name(first,s.toString());
 		}
 		else {
-			error(t,"illegal format(non-name element) detected");
+			error(first,"illegal format(non-name element) detected");
 			return null;
 		}
 	}
@@ -93,10 +99,10 @@ public class ExpressionParser {
 		boolean hasVarargs = false;
 		if(isKind(NAME)) {
 			list = namelist();
-			if(isKind(COMMA)) {
-				consume();
+			if(namelistHasargs) {
 				match(DOTDOTDOT);
 				hasVarargs = true;
+				namelistHasargs = false;
 			}
 		}
 		else if(isKind(DOTDOTDOT)) {
@@ -299,8 +305,15 @@ public class ExpressionParser {
  			e0 = new ExpVarArgs(first);
  			break;
  		case KW_function:
+ 			consume();
  			FuncBody e1 = functionBody();
+ 			e0 = new ExpFunction(first,e1);
  			break;
+ 		case LCURLY:
+ 			consume();
+ 			List<Field> flist = fieldList();
+ 			match(RCURLY);
+ 			e0 = new ExpTable(first,flist);
  		default:
  			break;
  		}
@@ -313,12 +326,10 @@ public class ExpressionParser {
  		}
  	}
  	
- 	
- 	
- 	
- 	
- 	
- 	
+ 	private List<Field> fieldList(){
+ 		List<Field> res = new ArrayList<>();
+ 		return res;
+ 	}
  	
  	
  	
@@ -353,6 +364,7 @@ public class ExpressionParser {
 			consume();
 			return tmp;
 		}
+		
 		error(kind);
 		return null; // unreachable
 	}

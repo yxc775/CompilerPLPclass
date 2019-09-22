@@ -20,6 +20,9 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import java.io.Reader;
 import java.io.StringReader;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import org.junit.jupiter.api.Test;
 
 import cop5556fa19.AST.Exp;
@@ -38,6 +41,7 @@ import cop5556fa19.AST.Expressions;
 import cop5556fa19.AST.Field;
 import cop5556fa19.AST.FieldExpKey;
 import cop5556fa19.AST.FieldImplicitKey;
+import cop5556fa19.AST.Name;
 import cop5556fa19.AST.ParList;
 import cop5556fa19.ExpressionParser.SyntaxException;
 
@@ -65,6 +69,34 @@ class ExpressionParserTest {
 		return e;
 	}
 	
+	@Test
+	void testfunctionc() throws Exception {
+		String input = "function (a,b,c,d,e,...) end";
+		Exp e = parseAndShow(input);
+		assertEquals(ExpFunction.class, e.getClass());
+		List<Name> test = new ArrayList<>();
+		test.add(new Name(new Token(Token.Kind.NAME,"a",0,0),"a"));
+		test.add(new Name(new Token(Token.Kind.NAME,"b",0,0),"b"));
+		test.add(new Name(new Token(Token.Kind.NAME,"c",0,0),"c"));
+		test.add(new Name(new Token(Token.Kind.NAME,"d",0,0),"d"));
+		test.add(new Name(new Token(Token.Kind.NAME,"e",0,0),"e"));
+		
+		assertEquals(test, ((ExpFunction) e).body.p.nameList);
+		assertEquals(true,((ExpFunction) e).body.p.hasVarArgs);
+		
+		input = "function (a,b,c,d,e) end";
+		e = parseAndShow(input);
+		assertEquals(ExpFunction.class, e.getClass());
+		test = new ArrayList<>();
+		test.add(new Name(new Token(Token.Kind.NAME,"a",0,0),"a"));
+		test.add(new Name(new Token(Token.Kind.NAME,"b",0,0),"b"));
+		test.add(new Name(new Token(Token.Kind.NAME,"c",0,0),"c"));
+		test.add(new Name(new Token(Token.Kind.NAME,"d",0,0),"d"));
+		test.add(new Name(new Token(Token.Kind.NAME,"e",0,0),"e"));
+		
+		assertEquals(test, ((ExpFunction) e).body.p.nameList);
+		assertEquals(false,((ExpFunction) e).body.p.hasVarArgs);
+	}
 
 
 	@Test
