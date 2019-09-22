@@ -59,11 +59,6 @@ public class Expressions {
 		Token first = new Token(op,op.toString(), 0,0);
 		return new ExpUnary(first,op,e);
 	}
-	
-	public static ExpFunction makeExpFunc(Block x, String body) {
-		Token first = new Token(Token.Kind.KW_function,"function",0,0);
-		ParList x = new ParList(new Token(Token.Kind.))
-	}
 
 	
 	
