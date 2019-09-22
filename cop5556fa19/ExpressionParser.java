@@ -244,15 +244,17 @@ public class ExpressionParser {
  	public Exp unaExp() throws Exception{
  		Token first = t;
  		Exp e0 = null;
-		if(isKind(KW_not) || isKind(OP_HASH) || isKind(OP_MINUS) || isKind(BIT_XOR)) {
+		while(isKind(KW_not) || isKind(OP_HASH) || isKind(OP_MINUS) || isKind(BIT_XOR)) {
 			Token op = consume();
 			Exp e1 = powExp();
 			e0 = new ExpUnary(first,op.kind,e1);
+		}
+		
+		if(e0 != null) {
 			return e0;
 		}
 		else {
-			e0 = powExp();
-			return e0;
+			return powExp();
 		}
  	}
  	
