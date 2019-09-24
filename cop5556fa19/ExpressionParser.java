@@ -328,11 +328,57 @@ public class ExpressionParser {
  		}
  	}
  	
- 	private List<Field> fieldList(){
+ 	private List<Field> fieldList() throws Exception{
  		List<Field> res = new ArrayList<>();
- 		return res;
+ 		Token first = t;
+		res.add(field());
+		while(isKind(COMMA) || isKind(SEMI)) {
+			consume();
+			if(isKind(LSQUARE) || isKind(NAME)|| isExp()) {
+				Field item = field();
+				res.add(item);
+			}
+			else {
+				break;
+			}
+		}
+		
+		
+		return res; 		
  	}
  	
+ 	private Field field() throws Exception {
+ 		Token first = t;
+ 		if(isKind(LSQUARE)) {
+ 			match(LSQUARE);
+ 			Exp key = exp();
+ 			match(RSQUARE);
+ 			match(ASSIGN);
+ 			Exp value = exp();
+ 			return new FieldExpKey(first,key,value);
+ 		}
+ 		else if(isKind(NAME)) {
+ 			Name name = name();
+ 			match(ASSIGN);
+ 			Exp value = exp();
+ 			return new FieldNameKey(first,name,value);
+ 		}
+ 		else {
+ 			Exp value = exp();
+ 			return new FieldImplicitKey(first,value);
+ 		}
+ 	}
+ 	
+ 	private boolean isExp() {
+ 		if(isKind(KW_nil) || isKind(KW_false) || isKind(KW_true) || isKind(INTLIT) || isKind(STRINGLIT)
+ 				|| isKind(DOTDOTDOT) || isKind(KW_function) || isKind(NAME)|| isKind(LPAREN) || isKind(LCURLY)|| isKind(OP_MINUS)
+ 				|| isKind(KW_not) || isKind(OP_HASH) || isKind(BIT_XOR)) {
+ 			return true;
+ 		}
+ 		else {
+ 			return false;
+ 		} 				
+ 	}
  	
  	
  	

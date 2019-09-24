@@ -188,14 +188,12 @@ class ExpressionParserTest {
 	
 	@Test
 	void testprecedence() throws Exception {
-		String input = "1 and 2 or 3";
+		String input = "1 or 2 and 3";
 		Exp e = parseAndShow(input);
 		Exp expected = Expressions.makeBinary(
-				Expressions.makeBinary(
-						Expressions.makeInt(1)
-				, KW_and
-				, Expressions.makeInt(2)), KW_or, 
-				Expressions.makeInt(3));
+				Expressions.makeInt(1), KW_or, 
+					Expressions.makeBinary(
+						Expressions.makeInt(2), KW_and, Expressions.makeInt(3)));
 		show("expected=" + expected);
 		assertEquals(expected,e);
 		
