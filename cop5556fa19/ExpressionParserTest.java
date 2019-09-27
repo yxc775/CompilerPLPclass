@@ -70,6 +70,21 @@ class ExpressionParserTest {
 		return e;
 	}
 	
+	@Test
+	void testnil() throws Exception{
+		String input = "nil";
+		Exp e = parseAndShow(input);
+		assertEquals(ExpNil.class, e.getClass());
+	}
+	
+	@Test
+	
+	void testVarArgs() throws Exception{
+		String input = "...";
+		Exp e = parseAndShow(input);
+		assertEquals(ExpVarArgs.class, e.getClass());
+	}
+	
 	
 	
 	
@@ -108,12 +123,20 @@ class ExpressionParserTest {
 		
 		assertEquals(test, ((ExpFunction) e).body.p.nameList);
 		assertEquals(true,((ExpFunction) e).body.p.hasVarArgs);
+		
+		input = "function (a) end";
+		e = parseAndShow(input);
+		assertEquals(ExpFunction.class, e.getClass());
+		test = new ArrayList<>();
+		test.add(new Name(new Token(Token.Kind.NAME,"a",0,0),"a"));
+		
+		assertEquals(test, ((ExpFunction) e).body.p.nameList);
+		assertEquals(false,((ExpFunction) e).body.p.hasVarArgs);
 	}
 	
 	@Test
 	void testTable() throws Exception{
 		String input = "{[1 + 1] = 5 , X = 5, 45}";
-		//String input2 = "{[1 + 1] = 5 , X = 5, X, X + 5,}";
 		Exp e = parseAndShow(input);
 		assertEquals(ExpTable.class, e.getClass());
 		FieldExpKey x = new FieldExpKey(new Token(LSQUARE,"[",0,0),Expressions.makeBinary(Expressions.makeInt(1), OP_PLUS, Expressions.makeInt(1)),Expressions.makeInt(5));
@@ -128,7 +151,6 @@ class ExpressionParserTest {
 		assertEquals(test, ((ExpTable) e).fields);
 		
 		input = "{[1 + 1] = 5 , X = 5, 45,}";
-		//String input2 = "{[1 + 1] = 5 , X = 5, X, X + 5,}";
 		e = parseAndShow(input);
 		assertEquals(ExpTable.class, e.getClass());
 		x = new FieldExpKey(new Token(LSQUARE,"[",0,0),Expressions.makeBinary(Expressions.makeInt(1), OP_PLUS, Expressions.makeInt(1)),Expressions.makeInt(5));
@@ -141,11 +163,58 @@ class ExpressionParserTest {
 		test.add(z);
 		
 		assertEquals(test, ((ExpTable) e).fields);
-		
-		//String input2 = "{[1 + 1] = 5 , X = 5, X, X + 5,}";
 		assertThrows(SyntaxException.class, () -> {
 		 Exp e2 = parseAndShow("{}");
 		});	
+	}
+	
+	@Test
+	void testSpecialTable() throws Exception{
+		String input = "{[1 + 1] = 5 , X = 5, X , 45 , X + 5}";
+		Exp e = parseAndShow(input);
+		assertEquals(ExpTable.class, e.getClass());
+		FieldExpKey x = new FieldExpKey(new Token(LSQUARE,"[",0,0),Expressions.makeBinary(Expressions.makeInt(1), OP_PLUS, Expressions.makeInt(1)),Expressions.makeInt(5));
+		FieldNameKey y = new FieldNameKey(new Token(NAME, "X",0,0),new Name(new Token(NAME, "X",0,0),"X"),Expressions.makeInt(5));
+		FieldImplicitKey y2 = new FieldImplicitKey(new Token(NAME,"X",0,0),new ExpName(new Token(NAME,"X",0,0)));
+		FieldImplicitKey z = new FieldImplicitKey(new Token(INTLIT,"45",0,0),Expressions.makeInt(45));
+		FieldImplicitKey z2 = new FieldImplicitKey(new Token(NAME,"X",0,0),Expressions.makeBinary(new ExpName(new Token(NAME,"X",0,0)), OP_PLUS, Expressions.makeInt(5)));
+		
+		List<Field> test = new ArrayList<>();
+		test.add(x);
+		test.add(y);
+		test.add(y2);
+		test.add(z);
+		test.add(z2);
+		
+		assertEquals(test, ((ExpTable) e).fields);
+		
+		input = "{[1 + 1] = 5 , X = 5, X , 45 , X + 5};";
+		e = parseAndShow(input);
+		assertEquals(ExpTable.class, e.getClass());
+		x = new FieldExpKey(new Token(LSQUARE,"[",0,0),Expressions.makeBinary(Expressions.makeInt(1), OP_PLUS, Expressions.makeInt(1)),Expressions.makeInt(5));
+		y = new FieldNameKey(new Token(NAME, "X",0,0),new Name(new Token(NAME, "X",0,0),"X"),Expressions.makeInt(5));
+		y2 = new FieldImplicitKey(new Token(NAME,"X",0,0),new ExpName(new Token(NAME,"X",0,0)));
+		z = new FieldImplicitKey(new Token(INTLIT,"45",0,0),Expressions.makeInt(45));
+		z2 = new FieldImplicitKey(new Token(NAME,"X",0,0),Expressions.makeBinary(new ExpName(new Token(NAME,"X",0,0)), OP_PLUS, Expressions.makeInt(5)));
+		
+		test = new ArrayList<>();
+		test.add(x);
+		test.add(y);
+		test.add(y2);
+		test.add(z);
+		test.add(z2);
+		
+		assertEquals(test, ((ExpTable) e).fields);
+		
+		input = "{[1 + 1] = 5};";
+		e = parseAndShow(input);
+		assertEquals(ExpTable.class, e.getClass());
+		x = new FieldExpKey(new Token(LSQUARE,"[",0,0),Expressions.makeBinary(Expressions.makeInt(1), OP_PLUS, Expressions.makeInt(1)),Expressions.makeInt(5));
+	
+		test = new ArrayList<>();
+		test.add(x);
+		
+		assertEquals(test, ((ExpTable) e).fields);
 	}
 
 
@@ -493,7 +562,7 @@ class ExpressionParserTest {
 	
 	@Test
 	void testParenAssoc() throws Exception {
-		String input = "1 +(1+1)";
+		String input = "1+(1+1)";
 		Exp e = parseAndShow(input);
 		Exp expected = Expressions.makeBinary(Expressions.makeInt(1), OP_PLUS,Expressions.makeBinary(
 				Expressions.makeInt(1),OP_PLUS,Expressions.makeInt(1)));
@@ -504,6 +573,13 @@ class ExpressionParserTest {
 		e = parseAndShow(input);
 		expected = Expressions.makeExpUnary(OP_MINUS,Expressions.makeBinary(
 				Expressions.makeInt(1),OP_PLUS,Expressions.makeInt(1)));
+		show("expected=" + expected);
+		assertEquals(expected,e);
+		
+		input = "- - -(1+1)";
+		e = parseAndShow(input);
+		expected = Expressions.makeExpUnary(OP_MINUS,Expressions.makeExpUnary(OP_MINUS,Expressions.makeExpUnary(OP_MINUS,Expressions.makeBinary(
+				Expressions.makeInt(1),OP_PLUS,Expressions.makeInt(1)))));
 		show("expected=" + expected);
 		assertEquals(expected,e);
 		

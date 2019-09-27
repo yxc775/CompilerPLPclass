@@ -138,10 +138,10 @@ public class ExpressionParser {
 		return e0;
 	}
  	
- 	/*
- 	Exp expForName(Token name) throws Exception {
+ 	
+ 	Exp exp(Token name) throws Exception {
 		Token first = name;
-		Exp e0 = new ExpName(name);
+		Exp e0 = andExp(name);
 		while (isKind(KW_or)) {
 			Token op = consume();
 			Exp e1 = andExp();
@@ -149,7 +149,7 @@ public class ExpressionParser {
 		}
 		return e0;
 	}
- 	*/
+ 	
  	
  	private Exp andExp() throws Exception{
  		Token first = t;
@@ -163,11 +163,34 @@ public class ExpressionParser {
 		return e0;
 	}
  	
+ 	private Exp andExp(Token name) throws Exception{
+ 		Token first = name;
+		Exp e0 = compareExp(name);
+		while(isKind(KW_and)) {
+			Token op = consume();
+			Exp e1 = compareExp();
+			e0 = new ExpBinary(first,e0,op,e1);
+		}
+		
+		return e0;
+	}
  	
  	
  	private Exp compareExp() throws Exception{
  		Token first = t;
 		Exp e0 = bitorExp();
+		while(isKind(REL_LT) || isKind(REL_GT) || isKind(REL_LE) || isKind(REL_GE) || isKind(REL_NOTEQ) || isKind(REL_EQEQ)) {
+			Token op = consume();
+			Exp e1 = bitorExp();
+			e0 = new ExpBinary(first,e0,op,e1);
+		}
+		
+		return e0;
+ 	}
+ 	
+ 	private Exp compareExp(Token name) throws Exception{
+ 		Token first = name;
+		Exp e0 = bitorExp(name);
 		while(isKind(REL_LT) || isKind(REL_GT) || isKind(REL_LE) || isKind(REL_GE) || isKind(REL_NOTEQ) || isKind(REL_EQEQ)) {
 			Token op = consume();
 			Exp e1 = bitorExp();
@@ -188,9 +211,31 @@ public class ExpressionParser {
 		return e0;
  	}
  	
+ 	private Exp bitorExp(Token name) throws Exception{
+ 		Token first = name;
+		Exp e0 = bitxorExp(name);
+		while(isKind(BIT_OR)) {
+			Token op = consume();
+			Exp e1 = bitxorExp();
+			e0 = new ExpBinary(first,e0,op,e1);
+		}
+		return e0;
+ 	}
+ 	
  	private Exp bitxorExp() throws Exception{
  		Token first = t;
 		Exp e0 = bitampExp();
+		while(isKind(BIT_XOR)) {
+			Token op = consume();
+			Exp e1 = bitampExp();
+			e0 = new ExpBinary(first,e0,op,e1);
+		}
+		return e0;
+ 	}
+ 	
+ 	private Exp bitxorExp(Token name) throws Exception{
+ 		Token first = name;
+		Exp e0 = bitampExp(name);
 		while(isKind(BIT_XOR)) {
 			Token op = consume();
 			Exp e1 = bitampExp();
@@ -210,6 +255,17 @@ public class ExpressionParser {
 		return e0;
  	}
  	
+ 	private Exp bitampExp(Token name) throws Exception{
+ 		Token first = name;
+		Exp e0 = bitshiftExp(name);
+		while(isKind(BIT_AMP)) {
+			Token op = consume();
+			Exp e1 = bitshiftExp();
+			e0 = new ExpBinary(first,e0,op,e1);
+		}
+		return e0;
+ 	}
+ 	
  	public Exp bitshiftExp() throws Exception{
  		Token first = t;
 		Exp e0 = dotdotExp();
@@ -221,9 +277,32 @@ public class ExpressionParser {
 		return e0; 		
  	}
  	
+ 	public Exp bitshiftExp(Token name) throws Exception{
+ 		Token first = t;
+		Exp e0 = dotdotExp(name);
+		while(isKind(BIT_SHIFTL) || isKind(BIT_SHIFTR)) {
+			Token op = consume();
+			Exp e1 = dotdotExp();
+			e0 = new ExpBinary(first,e0,op,e1);
+		}
+		return e0; 		
+ 	}
+ 	
+ 	
  	public Exp dotdotExp() throws Exception{
  		Token first = t;
 		Exp e0 = plusminusExp();
+		while(isKind(DOTDOT)) {
+			Token op = consume();
+			Exp e1 = dotdotExp();
+			e0 = new ExpBinary(first,e0,op,e1);
+		}
+		return e0; 		
+ 	}
+ 	
+ 	public Exp dotdotExp(Token name) throws Exception{
+ 		Token first = t;
+		Exp e0 = plusminusExp(name);
 		while(isKind(DOTDOT)) {
 			Token op = consume();
 			Exp e1 = dotdotExp();
@@ -243,9 +322,31 @@ public class ExpressionParser {
 		return e0; 		
  	}
  	
+ 	public Exp plusminusExp(Token name) throws Exception{
+ 		Token first = name;
+		Exp e0 = factorExp(name);
+		while(isKind(OP_PLUS) || isKind(OP_MINUS)) {
+			Token op = consume();
+			Exp e1 = factorExp();
+			e0 = new ExpBinary(first,e0,op,e1);
+		}
+		return e0; 		
+ 	}
+ 	
  	public Exp factorExp() throws Exception{
  		Token first = t;
 		Exp e0 = unaExp();
+		while(isKind(OP_TIMES) || isKind(OP_DIV) || isKind(OP_DIVDIV) || isKind(OP_MOD)) {
+			Token op = consume();
+			Exp e1 = unaExp();
+			e0 = new ExpBinary(first,e0,op,e1);
+		}
+		return e0; 	
+ 	}
+ 	
+ 	public Exp factorExp(Token name) throws Exception{
+ 		Token first = t;
+		Exp e0 = unaExp(name);
 		while(isKind(OP_TIMES) || isKind(OP_DIV) || isKind(OP_DIVDIV) || isKind(OP_MOD)) {
 			Token op = consume();
 			Exp e1 = unaExp();
@@ -277,9 +378,43 @@ public class ExpressionParser {
 		}
  	}
  	
+ 	public Exp unaExp(Token name) throws Exception{
+ 		Token first = name;
+ 		Exp e0 = null;
+		while(isKind(KW_not) || isKind(OP_HASH) || isKind(OP_MINUS) || isKind(BIT_XOR)) {
+			Token op = consume();
+			Exp e1 = null;
+			if(isKind(KW_not) || isKind(OP_HASH) || isKind(OP_MINUS) || isKind(BIT_XOR)) {
+				e1 = unaExp();
+			}
+			else {
+				e1 = powExp();
+			}
+			e0 = new ExpUnary(first,op.kind,e1);
+		}
+		
+		if(e0 != null) {
+			return e0;
+		}
+		else {
+			return powExp(name);
+		}
+ 	}
+ 	
  	public Exp powExp() throws Exception{
  		Token first = t;
 		Exp e0 = atomExp();
+		while(isKind(OP_POW)) {
+			Token op = consume();
+			Exp e1 = powExp();
+			e0 = new ExpBinary(first,e0,op,e1);
+		}
+		return e0; 	
+ 	}
+ 	
+ 	public Exp powExp(Token name) throws Exception{
+ 		Token first = name;
+		Exp e0 = atomExp(name);
 		while(isKind(OP_POW)) {
 			Token op = consume();
 			Exp e1 = powExp();
@@ -335,6 +470,57 @@ public class ExpressionParser {
  			List<Field> flist = fieldList();
  			match(RCURLY);
  			e0 = new ExpTable(first,flist);
+ 			break;
+ 		default:
+ 			break;
+ 		}
+ 		if(e0 != null) {
+ 			return e0;
+ 		}
+ 		else {
+ 			error(t,"illegal terminal statement");
+ 			return null;
+ 		}
+ 	}
+ 	
+ 	public Exp atomExp(Token name) throws Exception{
+ 		Token first = name;
+ 		Exp e0 = null;
+ 		switch(first.kind) {
+ 		case KW_nil:
+ 			e0 = new ExpNil(first);
+ 			break;
+ 		case KW_false:
+ 			e0 = new ExpFalse(first);
+ 			break;
+ 		case KW_true:
+ 			e0 = new ExpTrue(first);
+ 			break;
+ 		case INTLIT:
+ 			e0 = new ExpInt(first);
+ 			break;
+ 		case STRINGLIT:
+ 			e0 = new ExpString(first);
+ 			break;
+ 		case NAME:
+ 			e0 = new ExpName(first);
+ 			break;
+ 		case LPAREN:
+ 			e0 = exp();
+ 			match(RPAREN);
+ 			break;
+ 		case DOTDOTDOT:
+ 			e0 = new ExpVarArgs(first);
+ 			break;
+ 		case KW_function:
+ 			FuncBody e1 = functionBody();
+ 			e0 = new ExpFunction(first,e1);
+ 			break;
+ 		case LCURLY:
+ 			List<Field> flist = fieldList();
+ 			match(RCURLY);
+ 			e0 = new ExpTable(first,flist);
+ 			break;
  		default:
  			break;
  		}
@@ -379,19 +565,15 @@ public class ExpressionParser {
  		else if(isKind(NAME)) {
  			Token temp = first;
  			Name name = name();
- 			match(ASSIGN);
- 	 		Exp value = exp();
- 	 		return new FieldNameKey(first,name,value);
- 			/*
  			if(isKind(ASSIGN)) {
 	 			match(ASSIGN);
 	 	 		Exp value = exp();
 	 	 		return new FieldNameKey(first,name,value);
  			}
  			else {
- 				Exp value = expForName(temp);
+ 				Exp value = exp(temp);
  				return new FieldImplicitKey(first,value);
- 			}*/
+ 			}
  		}
  		else {
  			Exp value = exp();
