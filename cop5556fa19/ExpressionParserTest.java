@@ -41,6 +41,7 @@ import cop5556fa19.AST.Expressions;
 import cop5556fa19.AST.Field;
 import cop5556fa19.AST.FieldExpKey;
 import cop5556fa19.AST.FieldImplicitKey;
+import cop5556fa19.AST.FieldNameKey;
 import cop5556fa19.AST.Name;
 import cop5556fa19.AST.ParList;
 import cop5556fa19.ExpressionParser.SyntaxException;
@@ -69,6 +70,9 @@ class ExpressionParserTest {
 		return e;
 	}
 	
+	
+	
+	
 	@Test
 	void testfunctionc() throws Exception {
 		String input = "function (a,b,c,d,e,...) end";
@@ -96,6 +100,52 @@ class ExpressionParserTest {
 		
 		assertEquals(test, ((ExpFunction) e).body.p.nameList);
 		assertEquals(false,((ExpFunction) e).body.p.hasVarArgs);
+		
+		input = "function (...) end";
+		e = parseAndShow(input);
+		assertEquals(ExpFunction.class, e.getClass());
+		test = new ArrayList<>();
+		
+		assertEquals(test, ((ExpFunction) e).body.p.nameList);
+		assertEquals(true,((ExpFunction) e).body.p.hasVarArgs);
+	}
+	
+	@Test
+	void testTable() throws Exception{
+		String input = "{[1 + 1] = 5 , X = 5, 45}";
+		//String input2 = "{[1 + 1] = 5 , X = 5, X, X + 5,}";
+		Exp e = parseAndShow(input);
+		assertEquals(ExpTable.class, e.getClass());
+		FieldExpKey x = new FieldExpKey(new Token(LSQUARE,"[",0,0),Expressions.makeBinary(Expressions.makeInt(1), OP_PLUS, Expressions.makeInt(1)),Expressions.makeInt(5));
+		FieldNameKey y = new FieldNameKey(new Token(NAME, "X",0,0),new Name(new Token(NAME, "X",0,0),"X"),Expressions.makeInt(5));
+		FieldImplicitKey z = new FieldImplicitKey(new Token(INTLIT,"45",0,0),Expressions.makeInt(45));
+		
+		List<Field> test = new ArrayList<>();
+		test.add(x);
+		test.add(y);
+		test.add(z);
+		
+		assertEquals(test, ((ExpTable) e).fields);
+		
+		input = "{[1 + 1] = 5 , X = 5, 45,}";
+		//String input2 = "{[1 + 1] = 5 , X = 5, X, X + 5,}";
+		e = parseAndShow(input);
+		assertEquals(ExpTable.class, e.getClass());
+		x = new FieldExpKey(new Token(LSQUARE,"[",0,0),Expressions.makeBinary(Expressions.makeInt(1), OP_PLUS, Expressions.makeInt(1)),Expressions.makeInt(5));
+		y = new FieldNameKey(new Token(NAME, "X",0,0),new Name(new Token(NAME, "X",0,0),"X"),Expressions.makeInt(5));
+		z = new FieldImplicitKey(new Token(INTLIT,"45",0,0),Expressions.makeInt(45));
+		
+	    test = new ArrayList<>();
+		test.add(x);
+		test.add(y);
+		test.add(z);
+		
+		assertEquals(test, ((ExpTable) e).fields);
+		
+		//String input2 = "{[1 + 1] = 5 , X = 5, X, X + 5,}";
+		assertThrows(SyntaxException.class, () -> {
+		 Exp e2 = parseAndShow("{}");
+		});	
 	}
 
 
@@ -175,7 +225,7 @@ class ExpressionParserTest {
 
 	
 	@Test
-	void testRightAssoc() throws Exception {
+	void testRightAssocDOTDOT() throws Exception {
 		String input = "\"concat\" .. \"is\"..\"right associative\"";
 		Exp e = parseAndShow(input);
 		Exp expected = Expressions.makeBinary(
@@ -187,7 +237,19 @@ class ExpressionParserTest {
 	}
 	
 	@Test
-	void testprecedence() throws Exception {
+	void testRightAssocPOW() throws Exception {
+		String input = "\"concat\" ^ \"is\" ^ \"right associative\"";
+		Exp e = parseAndShow(input);
+		Exp expected = Expressions.makeBinary(
+				Expressions.makeExpString("concat")
+				, OP_POW
+				, Expressions.makeBinary("is",OP_POW,"right associative"));
+		show("expected=" + expected);
+		assertEquals(expected,e);
+	}
+	
+	@Test
+	void testprecedenceOrAnd() throws Exception {
 		String input = "1 or 2 and 3";
 		Exp e = parseAndShow(input);
 		Exp expected = Expressions.makeBinary(
@@ -200,14 +262,229 @@ class ExpressionParserTest {
 	}
 	
 	@Test
+	void testprecedenceCompareAnd() throws Exception {
+		String input = "1 and 2 < 3";
+		Exp e = parseAndShow(input);
+		Exp expected = Expressions.makeBinary(
+				Expressions.makeInt(1), KW_and, 
+					Expressions.makeBinary(
+						Expressions.makeInt(2), REL_LT, Expressions.makeInt(3)));
+		show("expected=" + expected);
+		assertEquals(expected,e);
+		
+	}
+	
+	@Test
+	void testprecedenceorCompare() throws Exception {
+		String input = "1 < 2 | 3";
+		Exp e = parseAndShow(input);
+		Exp expected = Expressions.makeBinary(
+				Expressions.makeInt(1), REL_LT, 
+					Expressions.makeBinary(
+						Expressions.makeInt(2), BIT_OR, Expressions.makeInt(3)));
+		show("expected=" + expected);
+		assertEquals(expected,e);
+		
+	}
+	
+	@Test
+	void testprecedenceXoror() throws Exception {
+		String input = "1 | 2 ~ 3";
+		Exp e = parseAndShow(input);
+		Exp expected = Expressions.makeBinary(
+				Expressions.makeInt(1), BIT_OR, 
+					Expressions.makeBinary(
+						Expressions.makeInt(2), BIT_XOR, Expressions.makeInt(3)));
+		show("expected=" + expected);
+		assertEquals(expected,e);
+		
+	}
+	
+	@Test
+	void testprecedenceAmpXor() throws Exception {
+		String input = "1 ~ 2 & 3";
+		Exp e = parseAndShow(input);
+		Exp expected = Expressions.makeBinary(
+				Expressions.makeInt(1), BIT_XOR, 
+					Expressions.makeBinary(
+						Expressions.makeInt(2), BIT_AMP, Expressions.makeInt(3)));
+		show("expected=" + expected);
+		assertEquals(expected,e);
+	}
+	
+	@Test
+	void testprecedenceShiftAmp() throws Exception {
+		String input = "1 & 2 >> 3";
+		Exp e = parseAndShow(input);
+		Exp expected = Expressions.makeBinary(
+				Expressions.makeInt(1), BIT_AMP, 
+					Expressions.makeBinary(
+						Expressions.makeInt(2), BIT_SHIFTR, Expressions.makeInt(3)));
+		show("expected=" + expected);
+		assertEquals(expected,e);
+	}
+	
+	@Test
+	void testprecedenceDOTDOTShift() throws Exception {
+		String input = "1 >> 2 .. 3";
+		Exp e = parseAndShow(input);
+		Exp expected = Expressions.makeBinary(
+				Expressions.makeInt(1), BIT_SHIFTR, 
+					Expressions.makeBinary(
+						Expressions.makeInt(2), DOTDOT, Expressions.makeInt(3)));
+		show("expected=" + expected);
+		assertEquals(expected,e);
+	}
+	
+	@Test
+	void testprecedencePLUSDOTDOT() throws Exception {
+		String input = "1 .. 2 + 3";
+		Exp e = parseAndShow(input);
+		Exp expected = Expressions.makeBinary(
+				Expressions.makeInt(1), DOTDOT, 
+					Expressions.makeBinary(
+						Expressions.makeInt(2), OP_PLUS, Expressions.makeInt(3)));
+		show("expected=" + expected);
+		assertEquals(expected,e);
+	}
+	
+	@Test
+	void testprecedenceTIMESPLUS() throws Exception {
+		String input = "1 + 2 * 3";
+		Exp e = parseAndShow(input);
+		Exp expected = Expressions.makeBinary(
+				Expressions.makeInt(1), OP_PLUS, 
+					Expressions.makeBinary(
+						Expressions.makeInt(2), OP_TIMES, Expressions.makeInt(3)));
+		show("expected=" + expected);
+		assertEquals(expected,e);
+	}
+	
+	@Test
+	void testprecedenceUNATIMES() throws Exception {
+		String input = "1 * -2";
+		Exp e = parseAndShow(input);
+		Exp expected = Expressions.makeBinary(
+				Expressions.makeInt(1), OP_TIMES, 
+				Expressions.makeExpUnary(OP_MINUS, 2));
+		show("expected=" + expected);
+		assertEquals(expected,e);
+	}
+	
+	@Test
+	void testprecedencePOWUNA() throws Exception {
+		String input = "-2 ^ 5";
+		Exp e = parseAndShow(input);
+		Exp expected = Expressions.makeExpUnary(OP_MINUS, Expressions.makeBinary(Expressions.makeInt(2), OP_POW, Expressions.makeInt(5)));
+		show("expected=" + expected);
+		assertEquals(expected,e);
+	}
+	
+	@Test
 	void testLeftAssoc() throws Exception {
-		String input = "\"minus\" - \"is\" - \"left associative\"";
+		String input = "\"minus\" - \"is\" + \"left associative\"";
 		Exp e = parseAndShow(input);
 		Exp expected = Expressions.makeBinary(
 				Expressions.makeBinary(
 						Expressions.makeExpString("minus")
 				, OP_MINUS
-				, Expressions.makeExpString("is")), OP_MINUS, 
+				, Expressions.makeExpString("is")), OP_PLUS, 
+				Expressions.makeExpString("left associative"));
+		show("expected=" + expected);
+		assertEquals(expected,e);
+		
+		input = "-~\"is\"";
+		e = parseAndShow(input);
+		expected = Expressions.makeExpUnary( OP_MINUS, 
+				Expressions.makeExpUnary(BIT_XOR,Expressions.makeExpString("is")));
+		show("expected=" + expected);
+		assertEquals(expected,e);
+		
+		input = "\"minus\" or \"is\" or \"left associative\"";
+		e = parseAndShow(input);
+		expected = Expressions.makeBinary(
+				Expressions.makeBinary(
+						Expressions.makeExpString("minus")
+				, 
+				KW_or, Expressions.makeExpString("is")), KW_or, 
+				Expressions.makeExpString("left associative"));
+		show("expected=" + expected);
+		assertEquals(expected,e);
+		
+		input = "\"minus\" and \"is\" and \"left associative\"";
+		e = parseAndShow(input);
+		expected = Expressions.makeBinary(
+				Expressions.makeBinary(
+						Expressions.makeExpString("minus")
+				, 
+				KW_and, Expressions.makeExpString("is")), KW_and, 
+				Expressions.makeExpString("left associative"));
+		show("expected=" + expected);
+		assertEquals(expected,e);
+		
+		
+		input = "\"minus\" < \"is\" < \"left associative\"";
+		e = parseAndShow(input);
+		expected = Expressions.makeBinary(
+				Expressions.makeBinary(
+						Expressions.makeExpString("minus")
+				, 
+				REL_LT, Expressions.makeExpString("is")), REL_LT, 
+				Expressions.makeExpString("left associative"));
+		show("expected=" + expected);
+		assertEquals(expected,e);
+		
+		input = "\"minus\" | \"is\" | \"left associative\"";
+		e = parseAndShow(input);
+		expected = Expressions.makeBinary(
+				Expressions.makeBinary(
+						Expressions.makeExpString("minus")
+				, 
+				BIT_OR, Expressions.makeExpString("is")), BIT_OR, 
+				Expressions.makeExpString("left associative"));
+		show("expected=" + expected);
+		assertEquals(expected,e);
+		
+		input = "\"minus\" ~ \"is\" ~ \"left associative\"";
+		e = parseAndShow(input);
+		expected = Expressions.makeBinary(
+				Expressions.makeBinary(
+						Expressions.makeExpString("minus")
+				, 
+				BIT_XOR, Expressions.makeExpString("is")), BIT_XOR, 
+				Expressions.makeExpString("left associative"));
+		show("expected=" + expected);
+		assertEquals(expected,e);
+		
+		input = "\"minus\" & \"is\" & \"left associative\"";
+		e = parseAndShow(input);
+		expected = Expressions.makeBinary(
+				Expressions.makeBinary(
+						Expressions.makeExpString("minus")
+				, 
+				BIT_AMP, Expressions.makeExpString("is")), BIT_AMP, 
+				Expressions.makeExpString("left associative"));
+		show("expected=" + expected);
+		assertEquals(expected,e);
+		
+		input = "\"minus\" << \"is\" << \"left associative\"";
+		e = parseAndShow(input);
+		expected = Expressions.makeBinary(
+				Expressions.makeBinary(
+						Expressions.makeExpString("minus")
+				, 
+				BIT_SHIFTL, Expressions.makeExpString("is")), BIT_SHIFTL, 
+				Expressions.makeExpString("left associative"));
+		show("expected=" + expected);
+		assertEquals(expected,e);
+		
+		input = "\"minus\" * \"is\" * \"left associative\"";
+		e = parseAndShow(input);
+		expected = Expressions.makeBinary(
+				Expressions.makeBinary(
+						Expressions.makeExpString("minus")
+				, 
+				OP_TIMES, Expressions.makeExpString("is")), OP_TIMES, 
 				Expressions.makeExpString("left associative"));
 		show("expected=" + expected);
 		assertEquals(expected,e);

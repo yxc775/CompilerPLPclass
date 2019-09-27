@@ -138,6 +138,19 @@ public class ExpressionParser {
 		return e0;
 	}
  	
+ 	/*
+ 	Exp expForName(Token name) throws Exception {
+		Token first = name;
+		Exp e0 = new ExpName(name);
+		while (isKind(KW_or)) {
+			Token op = consume();
+			Exp e1 = andExp();
+			e0 = new ExpBinary(first, e0, op, e1);
+		}
+		return e0;
+	}
+ 	*/
+ 	
  	private Exp andExp() throws Exception{
  		Token first = t;
 		Exp e0 = compareExp();
@@ -149,7 +162,7 @@ public class ExpressionParser {
 		
 		return e0;
 	}
-
+ 	
  	
  	
  	private Exp compareExp() throws Exception{
@@ -246,7 +259,13 @@ public class ExpressionParser {
  		Exp e0 = null;
 		while(isKind(KW_not) || isKind(OP_HASH) || isKind(OP_MINUS) || isKind(BIT_XOR)) {
 			Token op = consume();
-			Exp e1 = powExp();
+			Exp e1 = null;
+			if(isKind(KW_not) || isKind(OP_HASH) || isKind(OP_MINUS) || isKind(BIT_XOR)) {
+				e1 = unaExp();
+			}
+			else {
+				e1 = powExp();
+			}
 			e0 = new ExpUnary(first,op.kind,e1);
 		}
 		
@@ -358,10 +377,21 @@ public class ExpressionParser {
  			return new FieldExpKey(first,key,value);
  		}
  		else if(isKind(NAME)) {
+ 			Token temp = first;
  			Name name = name();
  			match(ASSIGN);
- 			Exp value = exp();
- 			return new FieldNameKey(first,name,value);
+ 	 		Exp value = exp();
+ 	 		return new FieldNameKey(first,name,value);
+ 			/*
+ 			if(isKind(ASSIGN)) {
+	 			match(ASSIGN);
+	 	 		Exp value = exp();
+	 	 		return new FieldNameKey(first,name,value);
+ 			}
+ 			else {
+ 				Exp value = expForName(temp);
+ 				return new FieldImplicitKey(first,value);
+ 			}*/
  		}
  		else {
  			Exp value = exp();
