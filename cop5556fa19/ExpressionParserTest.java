@@ -500,5 +500,12 @@ class ExpressionParserTest {
 		show("expected=" + expected);
 		assertEquals(expected,e);
 		
+		input = "-(1+1)";
+		e = parseAndShow(input);
+		expected = Expressions.makeExpUnary(OP_MINUS,Expressions.makeBinary(
+				Expressions.makeInt(1),OP_PLUS,Expressions.makeInt(1)));
+		show("expected=" + expected);
+		assertEquals(expected,e);
+		
 	}
 }
