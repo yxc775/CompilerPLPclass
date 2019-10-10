@@ -118,7 +118,10 @@ public class ExpressionParser {
 	FuncBody functionBody() throws Exception{
 		Token first = t;
 		match(LPAREN);
-		ParList list = parlist();
+		ParList list = null;
+		if(!isKind(RPAREN)) {
+		   list = parlist();
+		}
 		match(RPAREN);
 		Block b = block();
 		match(KW_end);
@@ -467,7 +470,10 @@ public class ExpressionParser {
  			break;
  		case LCURLY:
  			consume();
- 			List<Field> flist = fieldList();
+ 			List<Field> flist = new ArrayList<>();
+ 			if(!isKind(RCURLY)) {
+ 				flist = fieldList();
+ 			}
  			match(RCURLY);
  			e0 = new ExpTable(first,flist);
  			break;
@@ -517,7 +523,10 @@ public class ExpressionParser {
  			e0 = new ExpFunction(first,e1);
  			break;
  		case LCURLY:
- 			List<Field> flist = fieldList();
+ 			List<Field> flist = new ArrayList<>();
+ 			if(!isKind(RCURLY)) {
+ 				flist = fieldList();
+ 			}
  			match(RCURLY);
  			e0 = new ExpTable(first,flist);
  			break;

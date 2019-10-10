@@ -87,7 +87,12 @@ class ExpressionParserTest {
 	
 	
 	
-	
+	@Test
+	void testfunctionhw2() throws Exception{
+		String input = "function () end";
+		Exp e = parseAndShow(input);
+		assertEquals(ExpFunction.class, e.getClass());
+	}
 	@Test
 	void testfunctionc() throws Exception {
 		String input = "function (a,b,c,d,e,...) end";
@@ -135,7 +140,14 @@ class ExpressionParserTest {
 	}
 	
 	@Test
-	void testTable() throws Exception{
+	void testTableHw2() throws Exception{
+		String input = "{}";
+		Exp e = parseAndShow(input);
+		assertEquals(ExpTable.class, e.getClass());
+	}
+	
+	@Test
+	void testTable() throws Exception{	
 		String input = "{[1 + 1] = 5 , X = 5, 45}";
 		Exp e = parseAndShow(input);
 		assertEquals(ExpTable.class, e.getClass());
@@ -163,9 +175,6 @@ class ExpressionParserTest {
 		test.add(z);
 		
 		assertEquals(test, ((ExpTable) e).fields);
-		assertThrows(SyntaxException.class, () -> {
-		 Exp e2 = parseAndShow("{}");
-		});	
 	}
 	
 	@Test
