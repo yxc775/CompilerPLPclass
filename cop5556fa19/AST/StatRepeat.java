@@ -2,20 +2,20 @@ package cop5556fa19.AST;
 
 import cop5556fa19.Token;
 
-public class FuncBody extends ASTNode {
+public class StatRepeat extends Stat {
 
-	public final ParList p;
 	public final Block b;
+	public final Exp e;
 
-	public FuncBody(Token firstToken, ParList p, Block b) {
+	public StatRepeat(Token firstToken, Block b, Exp e) {
 		super(firstToken);
-		this.p = p;
 		this.b = b;
+		this.e = e;
 	}
 
 	@Override
 	public String toString() {
-		return "FuncBody [p=" + p + ", b=" + b +  "]";
+		return "StatRepeat [b=" + b + ", e=" + e  + "]";
 	}
 
 	@Override
@@ -23,7 +23,7 @@ public class FuncBody extends ASTNode {
 		final int prime = 31;
 		int result = 1;
 		result = prime * result + ((b == null) ? 0 : b.hashCode());
-		result = prime * result + ((p == null) ? 0 : p.hashCode());
+		result = prime * result + ((e == null) ? 0 : e.hashCode());
 		return result;
 	}
 
@@ -35,23 +35,23 @@ public class FuncBody extends ASTNode {
 			return false;
 		if (getClass() != obj.getClass())
 			return false;
-		FuncBody other = (FuncBody) obj;
+		StatRepeat other = (StatRepeat) obj;
 		if (b == null) {
 			if (other.b != null)
 				return false;
 		} else if (!b.equals(other.b))
 			return false;
-		if (p == null) {
-			if (other.p != null)
+		if (e == null) {
+			if (other.e != null)
 				return false;
-		} else if (!p.equals(other.p))
+		} else if (!e.equals(other.e))
 			return false;
 		return true;
 	}
 
 	@Override
 	public Object visit(ASTVisitor v, Object arg) throws Exception {
-		return v.visitFuncBody(this, arg);
+		return v.visitStatRepeat(this, arg);
 	}
 
 }

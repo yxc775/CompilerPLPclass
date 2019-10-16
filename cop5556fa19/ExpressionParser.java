@@ -18,6 +18,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import cop5556fa19.AST.Block;
+import cop5556fa19.AST.Stat;
 import cop5556fa19.AST.Exp;
 import cop5556fa19.AST.ExpBinary;
 import cop5556fa19.AST.ExpFalse;
@@ -606,7 +607,9 @@ public class ExpressionParser {
 
 
 	private Block block() {
-		return new Block(null);  //this is OK for Assignment 2
+		Token first = t;
+		List<Stat> stat = new ArrayList<>();
+		return new Block(t, stat);  //this is OK for Assignment 2
 	}
 
 

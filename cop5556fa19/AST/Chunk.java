@@ -2,27 +2,31 @@ package cop5556fa19.AST;
 
 import cop5556fa19.Token;
 
-public class FieldImplicitKey extends Field {
+public class Chunk extends ASTNode {
+	
+	public final Block block;
 
-	public final Exp exp;
-
-	public FieldImplicitKey(Token firstToken, Exp exp) {
+	public Chunk(Token firstToken, Block b) {
 		super(firstToken);
-		this.exp = exp;
+		this.block = b;
 	}
 
+	
 	@Override
 	public String toString() {
-		return "FieldImplicitKey [exp=" + exp + "]";
+		return "Chunk [block=" + block + ", firstToken=" + firstToken + "]";
 	}
+
+	
 
 	@Override
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + ((exp == null) ? 0 : exp.hashCode());
+		result = prime * result + ((block == null) ? 0 : block.hashCode());
 		return result;
 	}
+
 
 	@Override
 	public boolean equals(Object obj) {
@@ -32,18 +36,19 @@ public class FieldImplicitKey extends Field {
 			return false;
 		if (getClass() != obj.getClass())
 			return false;
-		FieldImplicitKey other = (FieldImplicitKey) obj;
-		if (exp == null) {
-			if (other.exp != null)
+		Chunk other = (Chunk) obj;
+		if (block == null) {
+			if (other.block != null)
 				return false;
-		} else if (!exp.equals(other.exp))
+		} else if (!block.equals(other.block))
 			return false;
 		return true;
 	}
 
+
 	@Override
 	public Object visit(ASTVisitor v, Object arg) throws Exception {
-		return v.visitFieldImplicitKey(this, arg);
+		return v.visitChunk(this,arg);
 	}
 
 }

@@ -2,25 +2,25 @@ package cop5556fa19.AST;
 
 import cop5556fa19.Token;
 
-public class FieldImplicitKey extends Field {
-
-	public final Exp exp;
-
-	public FieldImplicitKey(Token firstToken, Exp exp) {
+public class StatLabel extends Stat {
+	
+	Name label;
+	
+	public StatLabel(Token firstToken, Name label) {
 		super(firstToken);
-		this.exp = exp;
+		this.label = label;
 	}
 
 	@Override
 	public String toString() {
-		return "FieldImplicitKey [exp=" + exp + "]";
+		return "StatLabel [label=" + label + "]";
 	}
 
 	@Override
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + ((exp == null) ? 0 : exp.hashCode());
+		result = prime * result + ((label == null) ? 0 : label.hashCode());
 		return result;
 	}
 
@@ -32,18 +32,18 @@ public class FieldImplicitKey extends Field {
 			return false;
 		if (getClass() != obj.getClass())
 			return false;
-		FieldImplicitKey other = (FieldImplicitKey) obj;
-		if (exp == null) {
-			if (other.exp != null)
+		StatLabel other = (StatLabel) obj;
+		if (label == null) {
+			if (other.label != null)
 				return false;
-		} else if (!exp.equals(other.exp))
+		} else if (!label.equals(other.label))
 			return false;
 		return true;
 	}
 
 	@Override
 	public Object visit(ASTVisitor v, Object arg) throws Exception {
-		return v.visitFieldImplicitKey(this, arg);
+		return v.visitLabel(this,arg);
 	}
 
 }

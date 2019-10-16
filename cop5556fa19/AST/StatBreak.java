@@ -1,19 +1,18 @@
 package cop5556fa19.AST;
 
 import cop5556fa19.Token;
-import static cop5556fa19.Token.Kind.*;
 
-public class ExpNil extends Exp {
+public class StatBreak extends Stat {
 	
-	public static final ExpNil expNilConst = new ExpNil(new Token(KW_nil,"nil",0,0));
+	public static final StatBreak statBreakConst = new StatBreak(null);
 
-	public ExpNil(Token firstToken) {
+	public StatBreak(Token firstToken) {
 		super(firstToken);
 	}
 
 	@Override
 	public String toString() {
-		return "ExpNil";
+		return "StatBreak";
 	}
 
 	@Override
@@ -34,7 +33,7 @@ public class ExpNil extends Exp {
 
 	@Override
 	public Object visit(ASTVisitor v, Object arg) throws Exception {
-		return v.visitExpNil(this, arg);
+		return v.visitStatBreak(this, arg);
 	}
 
 }
