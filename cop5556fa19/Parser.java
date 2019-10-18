@@ -816,27 +816,15 @@ public class Parser {
 			Token name = consume();
 			ExpName tempName = new ExpName(name);
 			if(hasprefixtail()) {
-				Exp table = prefixtail(tempName);
-				Exp key = null;
-				if(isKind(LSQUARE)) {
-					consume();
-					key = exp();
-					match(RSQUARE);
-				}
-				else if(isKind(DOT)) {
-					consume();
-					if(isKind(NAME)) {
-						Token keyname = consume();
-						key = new ExpName(keyname);
-					}
-					else {
-						error(NAME);
-					}
+				Exp tablewithkey = prefixtail(tempName);
+				if(tablewithkey.getClass().equals(ExpTableLookup.class)) {
+					return tablewithkey;
 				}
 				else {
-					error(first,"missing look up key");
+					error(first,"illegal var statement!");
+					return null;
 				}
-				return new ExpTableLookup(first,table,key);
+				
 			}
 			else {
 				return tempName;
@@ -847,33 +835,19 @@ public class Parser {
 			Exp temptable = exp();
 			match(RPAREN);
 			if(hasprefixtail()) {
-				Exp table = prefixtail(temptable);
-				Exp key = null;
-				if(isKind(LSQUARE)) {
-					consume();
-					key = exp();
-					match(RSQUARE);
-				}
-				else if(isKind(DOT)) {
-					consume();
-					if(isKind(NAME)) {
-						Token keyname = consume();
-						key = new ExpName(keyname);
-					}
-					else {
-						error(NAME);
-					}
+				Exp tablewithkey = prefixtail(temptable);
+				if(tablewithkey.getClass().equals(ExpTableLookup.class)) {
+					return tablewithkey;
 				}
 				else {
-					error(first, "missing look up key");
+					error(first,"illegal var statement!");
+					return null;
 				}
-				return new ExpTableLookup(first,table,key);	
 			}
 			else {
 				error(first,"illegal looking up in table");
 				return null;
 			}
-			
 		}
 		else {
 			error(NAME,LPAREN);
