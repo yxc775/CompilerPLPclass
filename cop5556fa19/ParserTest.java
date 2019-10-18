@@ -44,9 +44,9 @@ import cop5556fa19.AST.FieldImplicitKey;
 import cop5556fa19.AST.FieldNameKey;
 import cop5556fa19.AST.Name;
 import cop5556fa19.AST.ParList;
-import cop5556fa19.ExpressionParser.SyntaxException;
+import cop5556fa19.Parser.SyntaxException;
 
-class ExpressionParserTest {
+class ParserTest {
 
 	// To make it easy to print objects and turn this output on and off
 	static final boolean doPrint = true;
@@ -64,7 +64,7 @@ class ExpressionParserTest {
 		show("parser input:\n" + input); // Display the input
 		Reader r = new StringReader(input);
 		Scanner scanner = new Scanner(r); // Create a Scanner and initialize it
-		ExpressionParser parser = new ExpressionParser(scanner);  // Create a parser
+		Parser parser = new Parser(scanner);  // Create a parser
 		Exp e = parser.exp(); // Parse and expression
 		show("e=" + e);  //Show the resulting AST
 		return e;

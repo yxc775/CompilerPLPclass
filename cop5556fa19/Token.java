@@ -66,9 +66,9 @@ public class Token {
 		LSQUARE,
 		RSQUARE,
 		COLONCOLON, // ::
-		SEMI,
-		COLON,
-		COMMA,
+		SEMI, //;
+		COLON, //:
+		COMMA, //,
 		DOT,   // .
 		DOTDOT,  // ..
 		DOTDOTDOT, // ...

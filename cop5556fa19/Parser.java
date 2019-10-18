@@ -17,17 +17,34 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import cop5556fa19.AST.RetStat;
+import cop5556fa19.AST.Chunk;
 import cop5556fa19.AST.Block;
 import cop5556fa19.AST.Stat;
+import cop5556fa19.AST.StatAssign;
+import cop5556fa19.AST.StatBreak;
+import cop5556fa19.AST.StatDo;
+import cop5556fa19.AST.StatFor;
+import cop5556fa19.AST.StatForEach;
+import cop5556fa19.AST.StatFunction;
+import cop5556fa19.AST.StatGoto;
+import cop5556fa19.AST.StatIf;
+import cop5556fa19.AST.StatLabel;
+import cop5556fa19.AST.StatLocalAssign;
+import cop5556fa19.AST.StatLocalFunc;
+import cop5556fa19.AST.StatRepeat;
+import cop5556fa19.AST.StatWhile;
 import cop5556fa19.AST.Exp;
 import cop5556fa19.AST.ExpBinary;
 import cop5556fa19.AST.ExpFalse;
 import cop5556fa19.AST.ExpFunction;
+import cop5556fa19.AST.ExpFunctionCall;
 import cop5556fa19.AST.ExpInt;
 import cop5556fa19.AST.ExpName;
 import cop5556fa19.AST.ExpNil;
 import cop5556fa19.AST.ExpString;
 import cop5556fa19.AST.ExpTable;
+import cop5556fa19.AST.ExpTableLookup;
 import cop5556fa19.AST.ExpTrue;
 import cop5556fa19.AST.ExpUnary;
 import cop5556fa19.AST.ExpVarArgs;
@@ -36,14 +53,16 @@ import cop5556fa19.AST.FieldExpKey;
 import cop5556fa19.AST.FieldImplicitKey;
 import cop5556fa19.AST.FieldNameKey;
 import cop5556fa19.AST.FuncBody;
+import cop5556fa19.AST.FuncName;
 import cop5556fa19.AST.Name;
 import cop5556fa19.AST.ParList;
 import cop5556fa19.Token.Kind;
 import static cop5556fa19.Token.Kind.*;
 
-public class ExpressionParser {
+public class Parser {
 	
 	boolean namelistHasargs = false;
+	boolean parlistParsing = false;
 	@SuppressWarnings("serial")
 	class SyntaxException extends Exception {
 		Token t;
@@ -57,7 +76,7 @@ public class ExpressionParser {
 	Token t;  //invariant:  this is the next token
 
 
-	ExpressionParser(Scanner s) throws Exception {
+	Parser(Scanner s) throws Exception {
 		this.scanner = s;
 		t = scanner.getNext(); //establish invariant
 	}
@@ -66,14 +85,18 @@ public class ExpressionParser {
 	List<Name> namelist() throws Exception{
 		List<Name> res = new ArrayList<>();
 		res.add(name());
+		namelistHasargs = false;
 		while(isKind(COMMA)) {
 			consume();
 			if(isKind(NAME)) {
 				res.add(name());
 			}
-			else if(isKind(DOTDOTDOT)) {
+			else if(isKind(DOTDOTDOT) && parlistParsing) {
 				namelistHasargs = true;
 				break;
+			}
+			else {
+				error(NAME);
 			}
 		}
 		return res;
@@ -98,6 +121,7 @@ public class ExpressionParser {
 		Token first = t;
 		List<Name> list = new ArrayList<>();
 		boolean hasVarargs = false;
+		parlistParsing = true;
 		if(isKind(NAME)) {
 			list = namelist();
 			if(namelistHasargs) {
@@ -113,6 +137,7 @@ public class ExpressionParser {
 		else {
 			error(NAME,DOTDOTDOT);
 		}
+		parlistParsing = false;
 		return new ParList(first,list,hasVarargs);
 	}
 	
@@ -592,24 +617,423 @@ public class ExpressionParser {
  	}
  	
  	private boolean isExp() {
- 		if(isKind(KW_nil) || isKind(KW_false) || isKind(KW_true) || isKind(INTLIT) || isKind(STRINGLIT)
+ 		return isKind(KW_nil) || isKind(KW_false) || isKind(KW_true) || isKind(INTLIT) || isKind(STRINGLIT)
  				|| isKind(DOTDOTDOT) || isKind(KW_function) || isKind(NAME)|| isKind(LPAREN) || isKind(LCURLY)|| isKind(OP_MINUS)
- 				|| isKind(KW_not) || isKind(OP_HASH) || isKind(BIT_XOR)) {
- 			return true;
+ 				|| isKind(KW_not) || isKind(OP_HASH) || isKind(BIT_XOR);	
+ 	}
+ 	
+ 	
+ 	public FuncName funcname() throws Exception{
+ 		Token first = t;
+ 		List<ExpName> names = expnamelist();
+ 		ExpName nameaftercol = null;
+ 		if(isKind(COLON)) {
+ 			consume();
+ 			if(isKind(NAME)) {
+ 				nameaftercol = new ExpName(consume());
+ 			}
+ 			else {
+ 				error(first,"not name");
+ 			}
+ 		}
+ 		return new FuncName(first,names,nameaftercol);
+ 	}
+ 	public Stat stat() throws Exception {
+ 		Token first = t;
+ 		if(isKind(NAME) || isKind(LPAREN)) {
+ 			List<Exp> varl = varlist();
+ 			match(ASSIGN);
+ 			List<Exp> expl = explist();
+ 			return new StatAssign(first, varl,expl);
+ 		}
+ 		else if(isKind(COLONCOLON)) {
+ 			consume();
+ 			Name name = name();
+ 			match(COLONCOLON);
+ 			return new StatLabel(first,name);
+ 		}
+ 		else if(isKind(KW_break)) {
+ 			consume();
+ 			return new StatBreak(first);
+ 		}
+ 		else if(isKind(KW_goto)) {
+ 			consume();
+ 			Name name = name();
+ 			return new StatGoto(first,name);
+ 		}
+ 		else if(isKind(KW_do)) {
+ 			consume();
+ 			Block b = block();
+ 			match(KW_end);
+ 			return new StatDo(first, b);
+ 		}
+ 		else if(isKind(KW_while)) {
+ 			consume();
+ 			Exp exp = exp();
+ 			match(KW_do);
+ 			Block b = block();
+ 			match(KW_end);
+ 			return new StatWhile(first,exp,b);
+ 		}
+ 		else if(isKind(KW_repeat)) {
+ 			consume();
+ 			Block b = block();
+ 			match(KW_until);
+ 			Exp exp = exp();
+ 			return new StatRepeat(first,b,exp);
+ 		}
+ 		else if(isKind(KW_if)) {
+ 			consume();
+ 			List<Exp> allexp = new ArrayList<>();
+ 			List<Block> allb = new ArrayList<>();
+ 			allexp.add(exp());
+ 			match(KW_then);
+ 			allb.add(block());
+ 			while(isKind(KW_elseif)) {
+ 				consume();
+ 				allexp.add(exp());
+ 				match(KW_then);
+ 				allb.add(block());
+ 			}
+ 			
+ 			if(isKind(KW_else)) {
+ 				consume();
+ 				allb.add(block());
+ 			}
+ 			
+ 			match(KW_end);
+ 			return new StatIf(first, allexp,allb); 			
+ 		}
+ 		else if(isKind(KW_for)) {
+ 			consume();
+ 			List<ExpName> namelist = expnamelist(); 	
+ 			if(namelist.size() == 1) {
+ 				ExpName name = namelist.get(0);
+ 				match(ASSIGN);
+ 				Exp ebg = exp();
+ 				match(COMMA);
+ 				Exp eed = exp();
+ 				Exp einc = null;
+ 				if(isKind(COMMA)) {
+ 					match(COMMA);
+ 					einc = exp();
+ 				}
+ 				match(KW_do);
+ 				Block b = block();
+ 				match(KW_end);
+ 				return new StatFor(first, name,ebg,eed,einc,b);
+ 			}
+ 			else {
+ 				match(KW_in);
+ 				List<Exp> explist = explist();
+ 				match(KW_do);
+ 				Block b = block();
+ 				match(KW_end);
+ 				return new StatForEach(first,namelist,explist,b);
+ 			}
+ 		}
+ 		else if(isKind(KW_function)) {
+ 			consume();
+ 			FuncName funcname = funcname();
+ 			FuncBody funcbody = functionBody();
+ 			return new StatFunction(first,funcname,funcbody);
+ 		}
+ 		else if(isKind(KW_local)) {
+ 			consume();
+ 			if(isKind(KW_function)) {
+ 				consume();
+ 				FuncName funcname = funcname();
+ 	 			FuncBody funcbody = functionBody();
+ 	 			return new StatLocalFunc(first,funcname,funcbody);
+ 			}
+ 			else if(isKind(NAME)) {
+ 				List<ExpName> namelist = expnamelist();
+ 				List<Exp> explist = null;
+ 				if(isKind(ASSIGN)) {
+ 					explist = explist();
+ 				}
+ 				return new StatLocalAssign(first,namelist,explist);
+ 			}
+ 			else {
+ 				error(KW_function,NAME);
+ 				return null;
+ 			}
+ 		}
+ 		else if(isKind(SEMI)){
+ 			consume();
+ 			return null;
  		}
  		else {
- 			return false;
- 		} 				
+ 			
+ 		}
+ 		return null;
+ 	}
+ 	
+ 	public List<ExpName> expnamelist() throws Exception{
+ 		List<ExpName> res = new ArrayList<>();
+ 		if(isKind(NAME)) {
+ 			res.add(new ExpName(consume()));
+ 		}
+ 		else {
+ 			error(NAME);
+ 		}
+		while(isKind(COMMA)) {
+			consume();
+			if(isKind(NAME)) {
+				res.add(new ExpName(consume()));
+			}
+			else {
+				error(NAME);
+			}
+		}
+		return res;
+ 	}
+ 	
+ 	public boolean hasStat(){
+ 		return isKind(SEMI) || isKind(NAME) || isKind(LPAREN) || isKind(COLONCOLON) 
+ 				|| isKind(KW_break) || isKind(KW_goto) || isKind(KW_do) || isKind(KW_while) || isKind(KW_repeat)
+ 				|| isKind(KW_if) || isKind(KW_for) || isKind(KW_function) || isKind(KW_local);
+ 	}
+ 	
+	public List<Exp> varlist() throws Exception{
+		List<Exp> res = new ArrayList<>();
+		res.add(var());
+		while(isKind(COMMA)) {
+			consume();
+			if(isKind(NAME) || isKind(LPAREN)) {
+				res.add(var());
+			}
+			else {
+				error(NAME,LPAREN);
+			}
+		}
+		return res; 		
+ 	}
+	
+	public Exp var() throws Exception{
+		Token first = t;
+		if(isKind(NAME)) {
+			Token name = consume();
+			ExpName tempName = new ExpName(name);
+			if(hasprefixtail()) {
+				Exp table = prefixtail(tempName);
+				Exp key = null;
+				if(isKind(LSQUARE)) {
+					consume();
+					key = exp();
+					match(RSQUARE);
+				}
+				else if(isKind(DOT)) {
+					consume();
+					if(isKind(NAME)) {
+						Token keyname = consume();
+						key = new ExpName(keyname);
+					}
+					else {
+						error(NAME);
+					}
+				}
+				else {
+					error(first,"missing look up key");
+				}
+				return new ExpTableLookup(first,table,key);
+			}
+			else {
+				return tempName;
+			}
+		}
+		else if(isKind(LPAREN)) {
+			consume();
+			Exp temptable = exp();
+			match(RPAREN);
+			if(hasprefixtail()) {
+				Exp table = prefixtail(temptable);
+				Exp key = null;
+				if(isKind(LSQUARE)) {
+					consume();
+					key = exp();
+					match(RSQUARE);
+				}
+				else if(isKind(DOT)) {
+					consume();
+					if(isKind(NAME)) {
+						Token keyname = consume();
+						key = new ExpName(keyname);
+					}
+					else {
+						error(NAME);
+					}
+				}
+				else {
+					error(first, "missing look up key");
+				}
+				return new ExpTableLookup(first,table,key);	
+			}
+			else {
+				error(first,"illegal looking up in table");
+				return null;
+			}
+			
+		}
+		else {
+			error(NAME,LPAREN);
+			return null;
+		}
+	}
+	
+	public boolean hasprefixtail() throws Exception{
+		return isKind(LSQUARE) || isKind(DOT) || isKind(LPAREN) || isKind(LCURLY) || isKind(STRINGLIT) || isKind(COLON);
+	}
+	
+	public Exp prefixtail(Exp tf) throws Exception{
+		Token first = t;
+		if(isKind(LSQUARE)) {
+			consume();
+			Exp key = exp();
+			match(RSQUARE);
+			if(hasprefixtail()) {
+				return prefixtail(new ExpTableLookup(first,tf,key));
+			}
+			else{
+				return new ExpTableLookup(first,tf,key);
+			}
+		}
+		else if(isKind(DOT)) {
+			consume();
+			if(isKind(NAME)) {
+				//Syntactic sugar
+				Token name = consume();
+				ExpName key = new ExpName(name);
+				if(!hasprefixtail()) {
+					return new ExpTableLookup(first,tf,key);
+				}
+				else {
+					return prefixtail(new ExpTableLookup(first,tf,key));
+				}
+			}
+			else {
+				error(NAME);
+				return null;
+			}	
+		}
+		else if(isKind(LPAREN) || isKind(LCURLY) || isKind(STRINGLIT)) {
+			List<Exp> args = args();
+			if(!hasprefixtail()) {
+				return new ExpFunctionCall(first,tf,args);
+			}
+			else {
+				return prefixtail(new ExpFunctionCall(first,tf,args));
+			}
+		}
+		else if(isKind(COLON)) {
+			consume();
+			//Syntactic sugar
+			if(isKind(NAME)) {
+				Token name = consume();
+				ExpName key = new ExpName(name);
+				List<Exp> args = args();
+				args.add(0,tf);
+				if(!hasprefixtail()) {
+					return new ExpFunctionCall(first,new ExpTableLookup(first,tf,key),args);
+				}
+				else {
+					return prefixtail(new ExpFunctionCall(first,new ExpTableLookup(first,tf,key),args));
+				}
+			}
+			else {
+				error(NAME);
+				return null;
+			}
+		}
+		else{
+			error(t,"unknown error in varlist");
+			return null;
+		}
+	}
+	
+	public List<Exp> args() throws Exception{
+		List<Exp> explist = new ArrayList<>();
+		if(isKind(LPAREN)) {
+			consume();
+			if(!isKind(RPAREN)) {
+				explist = explist();
+			}
+			match(RPAREN);
+		}
+		else if(isKind(LCURLY)) {
+			consume();
+			Token first = t;
+			List<Field> flist = new ArrayList<>();
+ 			if(!isKind(RCURLY)) {
+ 				flist = fieldList();
+ 			}
+ 			match(RCURLY);
+ 			ExpTable table = new ExpTable(first,flist);
+			explist.add(table);
+		}
+		else if(isKind(STRINGLIT)) {
+			Token s = consume();
+			ExpString string = new ExpString(s);
+			explist.add(string);
+		}
+		else {
+			error(LPAREN,LCURLY,STRINGLIT);
+		}
+		return explist;
+	}
+	
+	
+	
+	public List<Exp> explist() throws Exception{
+ 		List<Exp> res = new ArrayList<>();
+		res.add(exp());
+		while(isKind(COMMA)) {
+			consume();
+			res.add(exp());
+		}
+		return res; 		
  	}
  	
  	
  	
-
-
-	private Block block() {
+ 	
+ 	public RetStat rstat() throws Exception{
+ 		Token first = t;
+ 		match(KW_return);
+ 		List<Exp> explist = null;
+ 		if(isExp()) {
+ 			explist = explist();
+ 		}
+ 		
+ 		if(isKind(SEMI)) {
+ 			consume();
+ 		}
+ 		
+ 		return new RetStat(first,explist);
+ 	}
+ 	
+ 	public List<Stat> stats() throws Exception{
+ 		List<Stat> res = new ArrayList<>();
+ 		while(hasStat()) {
+ 			res.add(stat());
+ 		}
+ 		return res;
+ 	}
+ 	
+	private Block block()throws Exception{
 		Token first = t;
-		List<Stat> stat = new ArrayList<>();
-		return new Block(t, stat);  //this is OK for Assignment 2
+		List<Stat> stats = stats();
+		RetStat ret = null;
+		if(isKind(KW_return)) {
+			stats.add(ret);
+		}
+		return new Block(t, stats); 
+	}
+	
+	private Chunk chunk() throws Exception {
+		Token first = t;
+		Block b = block();
+		return new Chunk(first,b);
 	}
 
 
