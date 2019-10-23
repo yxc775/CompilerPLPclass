@@ -17,7 +17,7 @@ public class ParList extends ASTNode {
 
 	@Override
 	public String toString() {
-		return "ParList [nameList=" + nameList + ", hasVarArgs=" + hasVarArgs + "]";
+		return "ParList [nameList=" + nameList + ", hasVarArgs=" + hasVarArgs +  "]";
 	}
 
 	@Override

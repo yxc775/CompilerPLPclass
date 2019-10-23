@@ -14,7 +14,11 @@ public interface ASTVisitor {
 
 	Object visitExpTableConstr(ExpTable expTableConstr, Object arg);
 
+	Object visitTableDeref(TableDeref tableDeref, Object arg);
+
 	Object visitExpIdent(ExpName expIdent, Object arg);
+
+	Object visitFunctionCall(FunctionCall functionCall, Object arg);
 
 	Object visitExpList(ExpList expList, Object arg);
 
@@ -45,8 +49,6 @@ public interface ASTVisitor {
 	Object visitStatForEach(StatForEach statForEach, Object arg);
 
 	Object visitFuncName(FuncName funcName, Object arg);
-	
-	Object visitFunctionCall(FunctionCall funcCall, Object arg);
 
 	Object visitStatFunction(StatFunction statFunction, Object arg);
 
@@ -63,8 +65,6 @@ public interface ASTVisitor {
 	Object visitFieldNameKey(FieldNameKey fieldNameKey, Object arg);
 
 	Object visitFieldImplicitKey(FieldImplicitKey fieldImplicitKey, Object arg);
-	
-	Object visitFieldList(FieldList fieldlist, Object arg);
 
 	Object visitExpTrue(ExpTrue expTrue, Object arg);
 
@@ -76,10 +76,14 @@ public interface ASTVisitor {
 
 	Object visitStatAssign(StatAssign statAssign, Object arg);
 
+//	void visitStatFunctionCall(StatFunctionCall statFunctionCall, Object arg);
+
 	Object visitExpTableLookup(ExpTableLookup expTableLookup, Object arg);
 
 	Object visitExpFunctionCall(ExpFunctionCall expFunctionCall, Object arg);
 
 	Object visitLabel(StatLabel statLabel, Object ar);
+
+	Object visitFieldList(FieldList fieldList, Object arg);
 
 }

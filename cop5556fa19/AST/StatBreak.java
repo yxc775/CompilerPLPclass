@@ -12,7 +12,7 @@ public class StatBreak extends Stat {
 
 	@Override
 	public String toString() {
-		return "StatBreak";
+		return "StatBreak [firstToken=" + firstToken + "]";
 	}
 
 	@Override

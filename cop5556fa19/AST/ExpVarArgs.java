@@ -12,7 +12,7 @@ public class ExpVarArgs extends Exp {
 
 	@Override
 	public String toString() {
-		return "ExpVarArg";
+		return "ExpVarArg [firstToken=" + firstToken + "]";
 	}
 
 	@Override

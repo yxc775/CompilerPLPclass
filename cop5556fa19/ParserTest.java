@@ -29,11 +29,13 @@ import cop5556fa19.AST.Exp;
 import cop5556fa19.AST.ExpBinary;
 import cop5556fa19.AST.ExpFalse;
 import cop5556fa19.AST.ExpFunction;
+import cop5556fa19.AST.ExpFunctionCall;
 import cop5556fa19.AST.ExpInt;
 import cop5556fa19.AST.ExpName;
 import cop5556fa19.AST.ExpNil;
 import cop5556fa19.AST.ExpString;
 import cop5556fa19.AST.ExpTable;
+import cop5556fa19.AST.ExpTableLookup;
 import cop5556fa19.AST.ExpTrue;
 import cop5556fa19.AST.ExpUnary;
 import cop5556fa19.AST.ExpVarArgs;
@@ -76,6 +78,8 @@ class ParserTest {
 		Exp e = parseAndShow(input);
 		assertEquals(ExpNil.class, e.getClass());
 	}
+	
+	
 	
 	@Test
 	
@@ -145,6 +149,7 @@ class ParserTest {
 		Exp e = parseAndShow(input);
 		assertEquals(ExpTable.class, e.getClass());
 	}
+	
 	
 	@Test
 	void testTable() throws Exception{	

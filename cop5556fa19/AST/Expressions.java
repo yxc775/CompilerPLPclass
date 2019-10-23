@@ -73,7 +73,7 @@ public class Expressions {
 	
 	public static ExpName makeExpName(String name) {
 		Token first = new Token(NAME,name,0,0);
-		return new ExpName(first);
+		return new ExpName(first.getName());
 	}
 	
 	public static List<Stat>  makeStatList(Stat ... ss){
@@ -123,19 +123,12 @@ public class Expressions {
 		return new ExpInt(first);
 	}
 
-	public static ExpFunctionCall makeFunCall(Exp n, List<Exp> args, String method) {
-		Token first = n.firstToken;		
-		ExpName m =  makeExpName(method);
-		args.add(0,m);  //puts m in front of list, shifts other elements)
-		ExpFunctionCall f = new ExpFunctionCall(first,n,args);
-		return f;
-	}
-	
-	public static ExpFunctionCall makeFunCall(Exp n, List<Exp> args) {
-		Token first = n.firstToken;		
-		ExpFunctionCall f = new ExpFunctionCall(first,n,args);
-		return f;
-	}
+//	public static FunctionCall makeFunCall(Exp n, List<Exp> args, String method) {
+//		Token first = n.firstToken;		
+//		ExpName m = (method == null) ? null : makeExpName(method);
+//		FunctionCall f = new FunctionCall(first,n,args, m);
+//		return f;
+//	}
 
 	public static ExpFunctionCall makeExpFunCall(Exp n, List<Exp> args, Object object) {
 		Token first = n.firstToken;		
@@ -165,27 +158,16 @@ public class Expressions {
 		return new StatGoto(first,n);
 	}
 
-	public static StatDo makeStatDo(Stat ...stats) {
-		Stat firstStat = stats[0];
-		Block b = makeBlock(stats);
-		return new StatDo(firstStat.firstToken, b);
+	public static StatDo makeStatDo(Stat ... stats) {
+		Block b = makeBlock(stats);	
+		return new StatDo(b.firstToken, b);
 	}
-
 
 	public static StatBreak makeStatBreak() {
 		Token first = new Token(KW_break,"break",0,0);
 		return new StatBreak(first);
 	}
 
-	public static FieldExpKey makeFieldExpKey(Exp key, Exp v) {
-		Token first = key.firstToken;
-		return new FieldExpKey(first,key,v);
-	}
 
-	public static ExpTable makeTable(Field ...fields) {
-		List<Field> args = new ArrayList<>(Arrays.asList(fields));
-		Token first = fields[0].firstToken;
-		return new ExpTable(first,args);
-	}
 
 }

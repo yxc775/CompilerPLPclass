@@ -15,7 +15,7 @@ public class ExpList extends ASTNode {
 
 	@Override
 	public String toString() {
-		return "ExpList [list=" + list +  "]";
+		return "ExpList [list=" + list + ", firstToken=" + firstToken + "]";
 	}
 
 	@Override

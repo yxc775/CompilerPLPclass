@@ -19,7 +19,7 @@ public class StatForEach extends Stat {
 
 	@Override
 	public String toString() {
-		return "StatForEach [names=" + names + ", exps=" + exps + ", b=" + b +  "]";
+		return "StatForEach [names=" + names + ", exps=" + exps + ", b=" + b + ", firstToken=" + firstToken + "]";
 	}
 
 	@Override

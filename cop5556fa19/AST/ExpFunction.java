@@ -17,7 +17,7 @@ public class ExpFunction extends Exp {
 
 	@Override
 	public String toString() {
-		return "FuncDec [body=" + body +  "]";
+		return "FuncDec [body=" + body + ", firstToken=" + firstToken + "]";
 	}
 
 

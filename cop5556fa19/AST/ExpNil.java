@@ -13,7 +13,7 @@ public class ExpNil extends Exp {
 
 	@Override
 	public String toString() {
-		return "ExpNil";
+		return "ExpNil [firstToken=" + firstToken + "]";
 	}
 
 	@Override

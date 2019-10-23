@@ -15,7 +15,7 @@ public class StatFunction extends Stat {
 
 	@Override
 	public String toString() {
-		return "StatFunction [name=" + name + ", body=" + body +  "]";
+		return "StatFunction [name=" + name + ", body=" + body + ", firstToken=" + firstToken + "]";
 	}
 
 	@Override

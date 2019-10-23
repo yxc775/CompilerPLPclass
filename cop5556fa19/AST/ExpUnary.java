@@ -17,7 +17,7 @@ public class ExpUnary extends Exp {
 
 	@Override
 	public String toString() {
-		return "ExpUnary [op=" + op + ", e=" + e + "]";
+		return "ExpUnary [op=" + op + ", e=" + e + ", firstToken=" + firstToken + "]";
 	}
 	
 	

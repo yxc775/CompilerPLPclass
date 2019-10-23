@@ -15,7 +15,7 @@ public class RetStat extends Stat {
 
 	@Override
 	public String toString() {
-		return "RetStat [el=" + el +  "]";
+		return "RetStat [el=" + el + ", firstToken=" + firstToken + "]";
 	}
 
 	@Override

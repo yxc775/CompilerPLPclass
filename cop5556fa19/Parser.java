@@ -82,6 +82,14 @@ public class Parser {
 	}
 	
 	
+	public Chunk parse() throws Exception {
+		Chunk chunk = chunk();
+		if (!isKind(EOF)) {
+			throw new SyntaxException(t, "Parse ended before end of input");
+		}
+		return chunk;
+	}
+	
 	List<Name> namelist() throws Exception{
 		List<Name> res = new ArrayList<>();
 		res.add(name());
@@ -476,14 +484,27 @@ public class Parser {
  			consume();
  			e0 = new ExpString(first);
  			break;
+ 		///Fix to ensure exp grammar correctness
  		case NAME:
  			consume();
- 			e0 = new ExpName(first);
+ 			Exp temp = new ExpName(first);
+ 			if(hasprefixtail()) {
+ 	 			e0 = prefixtail(temp);
+ 			}
+ 			else {
+ 				e0 = temp;
+ 			}
  			break;
  		case LPAREN:
  			match(LPAREN);
- 			e0 = exp();
+ 			Exp tempe = exp();
  			match(RPAREN);
+ 			if(hasprefixtail()) {
+ 	 			e0 = prefixtail(tempe);
+ 			}
+ 			else {
+ 				e0 = tempe;
+ 			}
  			break;
  		case DOTDOTDOT:
  			consume();
@@ -535,11 +556,24 @@ public class Parser {
  			e0 = new ExpString(first);
  			break;
  		case NAME:
- 			e0 = new ExpName(first);
+ 			Exp temp = new ExpName(first);
+ 			if(hasprefixtail()) {
+ 	 			e0 = prefixtail(temp);
+ 			}
+ 			else {
+ 				e0 = temp;
+ 			}
  			break;
  		case LPAREN:
- 			e0 = exp();
+ 			match(LPAREN);
+ 			Exp tempe = exp();
  			match(RPAREN);
+ 			if(hasprefixtail()) {
+ 	 			e0 = prefixtail(tempe);
+ 			}
+ 			else {
+ 				e0 = tempe;
+ 			}
  			break;
  		case DOTDOTDOT:
  			e0 = new ExpVarArgs(first);
@@ -877,7 +911,7 @@ public class Parser {
 			if(isKind(NAME)) {
 				//Syntactic sugar
 				Token name = consume();
-				ExpName key = new ExpName(name);
+				ExpString key = new ExpString(name);
 				if(!hasprefixtail()) {
 					return new ExpTableLookup(first,tf,key);
 				}
@@ -963,6 +997,7 @@ public class Parser {
 		res.add(exp());
 		while(isKind(COMMA)) {
 			consume();
+			System.out.println(t.toString());
 			res.add(exp());
 		}
 		return res; 		
@@ -989,7 +1024,10 @@ public class Parser {
  	public List<Stat> stats() throws Exception{
  		List<Stat> res = new ArrayList<>();
  		while(hasStat()) {
- 			res.add(stat());
+ 			Stat x = stat();
+ 			if(x != null) {
+ 				res.add(x);
+ 			}
  		}
  		return res;
  	}
@@ -997,9 +1035,8 @@ public class Parser {
 	private Block block()throws Exception{
 		Token first = t;
 		List<Stat> stats = stats();
-		RetStat ret = null;
 		if(isKind(KW_return)) {
-			stats.add(ret);
+			stats.add(rstat());
 		}
 		return new Block(t, stats); 
 	}

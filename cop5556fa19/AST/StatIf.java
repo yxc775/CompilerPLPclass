@@ -16,7 +16,7 @@ public class StatIf extends Stat {
 
 	@Override
 	public String toString() {
-		return "StatIf [es=" + es + ", bs=" + bs  + "]";
+		return "StatIf [es=" + es + ", bs=" + bs + ", firstToken=" + firstToken + "]";
 	}
 
 	@Override

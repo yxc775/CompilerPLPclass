@@ -19,7 +19,7 @@ public class StatLocalFunc extends Stat {
 
 	@Override
 	public String toString() {
-		return "StatLocalFunc [funcName=" + funcName + ", funcBody=" + funcBody + "]";
+		return "StatLocalFunc [funcName=" + funcName + ", funcBody=" + funcBody + ", firstToken=" + firstToken + "]";
 	}
 
 

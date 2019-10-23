@@ -22,7 +22,7 @@ public class StatFor extends Stat {
 	@Override
 	public String toString() {
 		return "StatFor [name=" + name + ", ebeg=" + ebeg + ", eend=" + eend + ", einc=" + einc + ", g=" + g
-				 + "]";
+				+ ", firstToken=" + firstToken + "]";
 	}
 
 	@Override

@@ -15,7 +15,7 @@ public class StatRepeat extends Stat {
 
 	@Override
 	public String toString() {
-		return "StatRepeat [b=" + b + ", e=" + e  + "]";
+		return "StatRepeat [b=" + b + ", e=" + e + ", firstToken=" + firstToken + "]";
 	}
 
 	@Override

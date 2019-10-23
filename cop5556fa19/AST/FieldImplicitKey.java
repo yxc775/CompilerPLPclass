@@ -13,7 +13,7 @@ public class FieldImplicitKey extends Field {
 
 	@Override
 	public String toString() {
-		return "FieldImplicitKey [exp=" + exp + "]";
+		return "FieldImplicitKey [exp=" + exp + ", firstToken=" + firstToken + "]";
 	}
 
 	@Override

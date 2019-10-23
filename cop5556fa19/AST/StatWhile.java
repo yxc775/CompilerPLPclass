@@ -15,7 +15,7 @@ public class StatWhile extends Stat {
 
 	@Override
 	public String toString() {
-		return "StatWhile [e=" + e + ", b=" + b  + "]";
+		return "StatWhile [e=" + e + ", b=" + b + ", firstToken=" + firstToken + "]";
 	}
 
 	

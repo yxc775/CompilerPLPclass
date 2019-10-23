@@ -15,7 +15,7 @@ public class FuncBody extends ASTNode {
 
 	@Override
 	public String toString() {
-		return "FuncBody [p=" + p + ", b=" + b +  "]";
+		return "FuncBody [p=" + p + ", b=" + b + ", firstToken=" + firstToken + "]";
 	}
 
 	@Override

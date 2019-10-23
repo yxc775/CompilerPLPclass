@@ -15,7 +15,7 @@ public class ExpTrue extends Exp {
 
 	@Override
 	public String toString() {
-		return "ExpTrue";
+		return "ExpTrue [firstToken=" + firstToken + "]";
 	}
 
 

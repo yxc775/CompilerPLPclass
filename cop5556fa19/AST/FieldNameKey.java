@@ -18,7 +18,7 @@ public class FieldNameKey extends Field {
 
 	@Override
 	public String toString() {
-		return "FieldNameKey [name=" + name + ", exp=" + exp +  "]";
+		return "FieldNameKey [name=" + name + ", exp=" + exp + ", firstToken=" + firstToken + "]";
 	}
 
 

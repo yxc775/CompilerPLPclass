@@ -15,7 +15,7 @@ public class ExpTable extends Exp {
 
 	@Override
 	public String toString() {
-		return "ExpTable [fields=" + fields +  "]";
+		return "ExpTable [fields=" + fields + ", firstToken=" + firstToken + "]";
 	}
 
 	@Override

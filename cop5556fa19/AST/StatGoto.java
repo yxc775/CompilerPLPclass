@@ -13,7 +13,7 @@ public class StatGoto extends Stat {
 
 	@Override
 	public String toString() {
-		return "StatGoto [name=" + name +  "]";
+		return "StatGoto [name=" + name + ", firstToken=" + firstToken + "]";
 	}
 
 	@Override
