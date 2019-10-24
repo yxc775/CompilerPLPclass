@@ -20,11 +20,15 @@ import static org.junit.jupiter.api.Assertions.*;
 
 import java.io.Reader;
 import java.io.StringReader;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 
+import cop5556fa19.AST.ASTNode;
+import cop5556fa19.AST.Block;
+import cop5556fa19.AST.Chunk;
 import cop5556fa19.AST.Exp;
 import cop5556fa19.AST.ExpBinary;
 import cop5556fa19.AST.ExpFalse;
@@ -46,6 +50,11 @@ import cop5556fa19.AST.FieldImplicitKey;
 import cop5556fa19.AST.FieldNameKey;
 import cop5556fa19.AST.Name;
 import cop5556fa19.AST.ParList;
+import cop5556fa19.AST.Stat;
+import cop5556fa19.AST.StatAssign;
+import cop5556fa19.AST.StatBreak;
+import cop5556fa19.AST.StatDo;
+import cop5556fa19.AST.StatLabel;
 import cop5556fa19.Parser.SyntaxException;
 
 class ParserTest {
@@ -58,24 +67,49 @@ class ParserTest {
 			System.out.println(input.toString());
 		}
 	}
-
-
 	
-	// creates a scanner, parser, and parses the input.  
-	Exp parseAndShow(String input) throws Exception {
+	// creates a scanner, parser, and parses the input by calling exp().  
+	Exp parseExpAndShow(String input) throws Exception {
 		show("parser input:\n" + input); // Display the input
 		Reader r = new StringReader(input);
 		Scanner scanner = new Scanner(r); // Create a Scanner and initialize it
-		Parser parser = new Parser(scanner);  // Create a parser
-		Exp e = parser.exp(); // Parse and expression
-		show("e=" + e);  //Show the resulting AST
+		Parser parser = new Parser(scanner);
+		Exp e = parser.exp();
+		show("e=" + e);
 		return e;
+	}	
+	
+	
+	// creates a scanner, parser, and parses the input by calling block()  
+	Block parseBlockAndShow(String input) throws Exception {
+		show("parser input:\n" + input); // Display the input
+		Reader r = new StringReader(input);
+		Scanner scanner = new Scanner(r); // Create a Scanner and initialize it
+		Parser parser = new Parser(scanner);
+		Method method = Parser.class.getDeclaredMethod("block");
+		method.setAccessible(true);
+		Block b = (Block) method.invoke(parser);
+		show("b=" + b);
+		return b;
+	}	
+	
+	
+	//creates a scanner, parser, and parses the input by calling parse()
+	//this corresponds to the actual use case of the parser
+	Chunk parseAndShow(String input) throws Exception {
+		show("parser input:\n" + input); // Display the input
+		Reader r = new StringReader(input);
+		Scanner scanner = new Scanner(r); // Create a Scanner and initialize it
+		Parser parser = new Parser(scanner);
+		Chunk c = parser.parse();
+		show("c="+c);
+		return c;
 	}
 	
 	@Test
 	void testnil() throws Exception{
 		String input = "nil";
-		Exp e = parseAndShow(input);
+		Exp e = parseExpAndShow(input);
 		assertEquals(ExpNil.class, e.getClass());
 	}
 	
@@ -85,7 +119,7 @@ class ParserTest {
 	
 	void testVarArgs() throws Exception{
 		String input = "...";
-		Exp e = parseAndShow(input);
+		Exp e = parseExpAndShow(input);
 		assertEquals(ExpVarArgs.class, e.getClass());
 	}
 	
@@ -94,13 +128,13 @@ class ParserTest {
 	@Test
 	void testfunctionhw2() throws Exception{
 		String input = "function () end";
-		Exp e = parseAndShow(input);
+		Exp e = parseExpAndShow(input);
 		assertEquals(ExpFunction.class, e.getClass());
 	}
 	@Test
 	void testfunctionc() throws Exception {
 		String input = "function (a,b,c,d,e,...) end";
-		Exp e = parseAndShow(input);
+		Exp e = parseExpAndShow(input);
 		assertEquals(ExpFunction.class, e.getClass());
 		List<Name> test = new ArrayList<>();
 		test.add(new Name(new Token(Token.Kind.NAME,"a",0,0),"a"));
@@ -113,7 +147,7 @@ class ParserTest {
 		assertEquals(true,((ExpFunction) e).body.p.hasVarArgs);
 		
 		input = "function (a,b,c,d,e) end";
-		e = parseAndShow(input);
+		e = parseExpAndShow(input);
 		assertEquals(ExpFunction.class, e.getClass());
 		test = new ArrayList<>();
 		test.add(new Name(new Token(Token.Kind.NAME,"a",0,0),"a"));
@@ -126,7 +160,7 @@ class ParserTest {
 		assertEquals(false,((ExpFunction) e).body.p.hasVarArgs);
 		
 		input = "function (...) end";
-		e = parseAndShow(input);
+		e = parseExpAndShow(input);
 		assertEquals(ExpFunction.class, e.getClass());
 		test = new ArrayList<>();
 		
@@ -134,7 +168,7 @@ class ParserTest {
 		assertEquals(true,((ExpFunction) e).body.p.hasVarArgs);
 		
 		input = "function (a) end";
-		e = parseAndShow(input);
+		e = parseExpAndShow(input);
 		assertEquals(ExpFunction.class, e.getClass());
 		test = new ArrayList<>();
 		test.add(new Name(new Token(Token.Kind.NAME,"a",0,0),"a"));
@@ -146,7 +180,7 @@ class ParserTest {
 	@Test
 	void testTableHw2() throws Exception{
 		String input = "{}";
-		Exp e = parseAndShow(input);
+		Exp e = parseExpAndShow(input);
 		assertEquals(ExpTable.class, e.getClass());
 	}
 	
@@ -154,7 +188,7 @@ class ParserTest {
 	@Test
 	void testTable() throws Exception{	
 		String input = "{[1 + 1] = 5 , X = 5, 45}";
-		Exp e = parseAndShow(input);
+		Exp e = parseExpAndShow(input);
 		assertEquals(ExpTable.class, e.getClass());
 		FieldExpKey x = new FieldExpKey(new Token(LSQUARE,"[",0,0),Expressions.makeBinary(Expressions.makeInt(1), OP_PLUS, Expressions.makeInt(1)),Expressions.makeInt(5));
 		FieldNameKey y = new FieldNameKey(new Token(NAME, "X",0,0),new Name(new Token(NAME, "X",0,0),"X"),Expressions.makeInt(5));
@@ -168,7 +202,7 @@ class ParserTest {
 		assertEquals(test, ((ExpTable) e).fields);
 		
 		input = "{[1 + 1] = 5 , X = 5, 45,}";
-		e = parseAndShow(input);
+		e = parseExpAndShow(input);
 		assertEquals(ExpTable.class, e.getClass());
 		x = new FieldExpKey(new Token(LSQUARE,"[",0,0),Expressions.makeBinary(Expressions.makeInt(1), OP_PLUS, Expressions.makeInt(1)),Expressions.makeInt(5));
 		y = new FieldNameKey(new Token(NAME, "X",0,0),new Name(new Token(NAME, "X",0,0),"X"),Expressions.makeInt(5));
@@ -185,7 +219,7 @@ class ParserTest {
 	@Test
 	void testSpecialTable() throws Exception{
 		String input = "{[1 + 1] = 5 , X = 5, X , 45 , X + 5}";
-		Exp e = parseAndShow(input);
+		Exp e = parseExpAndShow(input);
 		assertEquals(ExpTable.class, e.getClass());
 		FieldExpKey x = new FieldExpKey(new Token(LSQUARE,"[",0,0),Expressions.makeBinary(Expressions.makeInt(1), OP_PLUS, Expressions.makeInt(1)),Expressions.makeInt(5));
 		FieldNameKey y = new FieldNameKey(new Token(NAME, "X",0,0),new Name(new Token(NAME, "X",0,0),"X"),Expressions.makeInt(5));
@@ -203,7 +237,7 @@ class ParserTest {
 		assertEquals(test, ((ExpTable) e).fields);
 		
 		input = "{[1 + 1] = 5 , X = 5, X , 45 , X + 5};";
-		e = parseAndShow(input);
+		e = parseExpAndShow(input);
 		assertEquals(ExpTable.class, e.getClass());
 		x = new FieldExpKey(new Token(LSQUARE,"[",0,0),Expressions.makeBinary(Expressions.makeInt(1), OP_PLUS, Expressions.makeInt(1)),Expressions.makeInt(5));
 		y = new FieldNameKey(new Token(NAME, "X",0,0),new Name(new Token(NAME, "X",0,0),"X"),Expressions.makeInt(5));
@@ -221,7 +255,7 @@ class ParserTest {
 		assertEquals(test, ((ExpTable) e).fields);
 		
 		input = "{[1 + 1] = 5};";
-		e = parseAndShow(input);
+		e = parseExpAndShow(input);
 		assertEquals(ExpTable.class, e.getClass());
 		x = new FieldExpKey(new Token(LSQUARE,"[",0,0),Expressions.makeBinary(Expressions.makeInt(1), OP_PLUS, Expressions.makeInt(1)),Expressions.makeInt(5));
 	
@@ -235,7 +269,7 @@ class ParserTest {
 	@Test
 	void testIdent0() throws Exception {
 		String input = "x";
-		Exp e = parseAndShow(input);
+		Exp e = parseExpAndShow(input);
 		assertEquals(ExpName.class, e.getClass());
 		assertEquals("x", ((ExpName) e).name);
 	}
@@ -243,7 +277,7 @@ class ParserTest {
 	@Test
 	void testIdent1() throws Exception {
 		String input = "(x)";
-		Exp e = parseAndShow(input);
+		Exp e = parseExpAndShow(input);
 		assertEquals(ExpName.class, e.getClass());
 		assertEquals("x", ((ExpName) e).name);
 	}
@@ -251,7 +285,7 @@ class ParserTest {
 	@Test
 	void testString() throws Exception {
 		String input = "\"string\"";
-		Exp e = parseAndShow(input);
+		Exp e = parseExpAndShow(input);
 		assertEquals(ExpString.class, e.getClass());
 		assertEquals("string", ((ExpString) e).v);
 	}
@@ -259,21 +293,21 @@ class ParserTest {
 	@Test
 	void testBoolean0() throws Exception {
 		String input = "true";
-		Exp e = parseAndShow(input);
+		Exp e = parseExpAndShow(input);
 		assertEquals(ExpTrue.class, e.getClass());
 	}
 
 	@Test
 	void testBoolean1() throws Exception {
 		String input = "false";
-		Exp e = parseAndShow(input);
+		Exp e = parseExpAndShow(input);
 		assertEquals(ExpFalse.class, e.getClass());
 	}
 	
 	@Test
 	void testBinaryor() throws Exception {
 		String input = "1 or 2";
-		Exp e = parseAndShow(input);
+		Exp e = parseExpAndShow(input);
 		Exp expected = Expressions.makeBinary(1,KW_or,2);
 		show("expected="+expected);
 		assertEquals(expected,e);
@@ -282,7 +316,7 @@ class ParserTest {
 	@Test
 	void testBinary0() throws Exception {
 		String input = "1 + 2";
-		Exp e = parseAndShow(input);
+		Exp e = parseExpAndShow(input);
 		Exp expected = Expressions.makeBinary(1,OP_PLUS,2);
 		show("expected="+expected);
 		assertEquals(expected,e);
@@ -291,7 +325,7 @@ class ParserTest {
 	@Test
 	void testUnary0() throws Exception {
 		String input = "-2";
-		Exp e = parseAndShow(input);
+		Exp e = parseExpAndShow(input);
 		Exp expected = Expressions.makeExpUnary(OP_MINUS, 2);
 		show("expected="+expected);
 		assertEquals(expected,e);
@@ -301,7 +335,7 @@ class ParserTest {
 	void testUnary1() throws Exception {
 		String input = "-*2\n";
 		assertThrows(SyntaxException.class, () -> {
-		Exp e = parseAndShow(input);
+		Exp e = parseExpAndShow(input);
 		});	
 	}
 	
@@ -310,7 +344,7 @@ class ParserTest {
 	@Test
 	void testRightAssocDOTDOT() throws Exception {
 		String input = "\"concat\" .. \"is\"..\"right associative\"";
-		Exp e = parseAndShow(input);
+		Exp e = parseExpAndShow(input);
 		Exp expected = Expressions.makeBinary(
 				Expressions.makeExpString("concat")
 				, DOTDOT
@@ -322,7 +356,7 @@ class ParserTest {
 	@Test
 	void testRightAssocPOW() throws Exception {
 		String input = "\"concat\" ^ \"is\" ^ \"right associative\"";
-		Exp e = parseAndShow(input);
+		Exp e = parseExpAndShow(input);
 		Exp expected = Expressions.makeBinary(
 				Expressions.makeExpString("concat")
 				, OP_POW
@@ -334,7 +368,7 @@ class ParserTest {
 	@Test
 	void testprecedenceOrAnd() throws Exception {
 		String input = "1 or 2 and 3";
-		Exp e = parseAndShow(input);
+		Exp e = parseExpAndShow(input);
 		Exp expected = Expressions.makeBinary(
 				Expressions.makeInt(1), KW_or, 
 					Expressions.makeBinary(
@@ -347,7 +381,7 @@ class ParserTest {
 	@Test
 	void testprecedenceCompareAnd() throws Exception {
 		String input = "1 and 2 < 3";
-		Exp e = parseAndShow(input);
+		Exp e = parseExpAndShow(input);
 		Exp expected = Expressions.makeBinary(
 				Expressions.makeInt(1), KW_and, 
 					Expressions.makeBinary(
@@ -360,7 +394,7 @@ class ParserTest {
 	@Test
 	void testprecedenceorCompare() throws Exception {
 		String input = "1 < 2 | 3";
-		Exp e = parseAndShow(input);
+		Exp e = parseExpAndShow(input);
 		Exp expected = Expressions.makeBinary(
 				Expressions.makeInt(1), REL_LT, 
 					Expressions.makeBinary(
@@ -373,7 +407,7 @@ class ParserTest {
 	@Test
 	void testprecedenceXoror() throws Exception {
 		String input = "1 | 2 ~ 3";
-		Exp e = parseAndShow(input);
+		Exp e = parseExpAndShow(input);
 		Exp expected = Expressions.makeBinary(
 				Expressions.makeInt(1), BIT_OR, 
 					Expressions.makeBinary(
@@ -386,7 +420,7 @@ class ParserTest {
 	@Test
 	void testprecedenceAmpXor() throws Exception {
 		String input = "1 ~ 2 & 3";
-		Exp e = parseAndShow(input);
+		Exp e = parseExpAndShow(input);
 		Exp expected = Expressions.makeBinary(
 				Expressions.makeInt(1), BIT_XOR, 
 					Expressions.makeBinary(
@@ -398,7 +432,7 @@ class ParserTest {
 	@Test
 	void testprecedenceShiftAmp() throws Exception {
 		String input = "1 & 2 >> 3";
-		Exp e = parseAndShow(input);
+		Exp e = parseExpAndShow(input);
 		Exp expected = Expressions.makeBinary(
 				Expressions.makeInt(1), BIT_AMP, 
 					Expressions.makeBinary(
@@ -410,7 +444,7 @@ class ParserTest {
 	@Test
 	void testprecedenceDOTDOTShift() throws Exception {
 		String input = "1 >> 2 .. 3";
-		Exp e = parseAndShow(input);
+		Exp e = parseExpAndShow(input);
 		Exp expected = Expressions.makeBinary(
 				Expressions.makeInt(1), BIT_SHIFTR, 
 					Expressions.makeBinary(
@@ -422,7 +456,7 @@ class ParserTest {
 	@Test
 	void testprecedencePLUSDOTDOT() throws Exception {
 		String input = "1 .. 2 + 3";
-		Exp e = parseAndShow(input);
+		Exp e = parseExpAndShow(input);
 		Exp expected = Expressions.makeBinary(
 				Expressions.makeInt(1), DOTDOT, 
 					Expressions.makeBinary(
@@ -434,7 +468,7 @@ class ParserTest {
 	@Test
 	void testprecedenceTIMESPLUS() throws Exception {
 		String input = "1 + 2 * 3";
-		Exp e = parseAndShow(input);
+		Exp e = parseExpAndShow(input);
 		Exp expected = Expressions.makeBinary(
 				Expressions.makeInt(1), OP_PLUS, 
 					Expressions.makeBinary(
@@ -446,7 +480,7 @@ class ParserTest {
 	@Test
 	void testprecedenceUNATIMES() throws Exception {
 		String input = "1 * -2";
-		Exp e = parseAndShow(input);
+		Exp e = parseExpAndShow(input);
 		Exp expected = Expressions.makeBinary(
 				Expressions.makeInt(1), OP_TIMES, 
 				Expressions.makeExpUnary(OP_MINUS, 2));
@@ -457,7 +491,7 @@ class ParserTest {
 	@Test
 	void testprecedencePOWUNA() throws Exception {
 		String input = "-2 ^ 5";
-		Exp e = parseAndShow(input);
+		Exp e = parseExpAndShow(input);
 		Exp expected = Expressions.makeExpUnary(OP_MINUS, Expressions.makeBinary(Expressions.makeInt(2), OP_POW, Expressions.makeInt(5)));
 		show("expected=" + expected);
 		assertEquals(expected,e);
@@ -466,7 +500,7 @@ class ParserTest {
 	@Test
 	void testLeftAssoc() throws Exception {
 		String input = "\"minus\" - \"is\" + \"left associative\"";
-		Exp e = parseAndShow(input);
+		Exp e = parseExpAndShow(input);
 		Exp expected = Expressions.makeBinary(
 				Expressions.makeBinary(
 						Expressions.makeExpString("minus")
@@ -477,14 +511,14 @@ class ParserTest {
 		assertEquals(expected,e);
 		
 		input = "-~\"is\"";
-		e = parseAndShow(input);
+		e = parseExpAndShow(input);
 		expected = Expressions.makeExpUnary( OP_MINUS, 
 				Expressions.makeExpUnary(BIT_XOR,Expressions.makeExpString("is")));
 		show("expected=" + expected);
 		assertEquals(expected,e);
 		
 		input = "\"minus\" or \"is\" or \"left associative\"";
-		e = parseAndShow(input);
+		e = parseExpAndShow(input);
 		expected = Expressions.makeBinary(
 				Expressions.makeBinary(
 						Expressions.makeExpString("minus")
@@ -495,7 +529,7 @@ class ParserTest {
 		assertEquals(expected,e);
 		
 		input = "\"minus\" and \"is\" and \"left associative\"";
-		e = parseAndShow(input);
+		e = parseExpAndShow(input);
 		expected = Expressions.makeBinary(
 				Expressions.makeBinary(
 						Expressions.makeExpString("minus")
@@ -507,7 +541,7 @@ class ParserTest {
 		
 		
 		input = "\"minus\" < \"is\" < \"left associative\"";
-		e = parseAndShow(input);
+		e = parseExpAndShow(input);
 		expected = Expressions.makeBinary(
 				Expressions.makeBinary(
 						Expressions.makeExpString("minus")
@@ -518,7 +552,7 @@ class ParserTest {
 		assertEquals(expected,e);
 		
 		input = "\"minus\" | \"is\" | \"left associative\"";
-		e = parseAndShow(input);
+		e = parseExpAndShow(input);
 		expected = Expressions.makeBinary(
 				Expressions.makeBinary(
 						Expressions.makeExpString("minus")
@@ -529,7 +563,7 @@ class ParserTest {
 		assertEquals(expected,e);
 		
 		input = "\"minus\" ~ \"is\" ~ \"left associative\"";
-		e = parseAndShow(input);
+		e = parseExpAndShow(input);
 		expected = Expressions.makeBinary(
 				Expressions.makeBinary(
 						Expressions.makeExpString("minus")
@@ -540,7 +574,7 @@ class ParserTest {
 		assertEquals(expected,e);
 		
 		input = "\"minus\" & \"is\" & \"left associative\"";
-		e = parseAndShow(input);
+		e = parseExpAndShow(input);
 		expected = Expressions.makeBinary(
 				Expressions.makeBinary(
 						Expressions.makeExpString("minus")
@@ -551,7 +585,7 @@ class ParserTest {
 		assertEquals(expected,e);
 		
 		input = "\"minus\" << \"is\" << \"left associative\"";
-		e = parseAndShow(input);
+		e = parseExpAndShow(input);
 		expected = Expressions.makeBinary(
 				Expressions.makeBinary(
 						Expressions.makeExpString("minus")
@@ -562,7 +596,7 @@ class ParserTest {
 		assertEquals(expected,e);
 		
 		input = "\"minus\" * \"is\" * \"left associative\"";
-		e = parseAndShow(input);
+		e = parseExpAndShow(input);
 		expected = Expressions.makeBinary(
 				Expressions.makeBinary(
 						Expressions.makeExpString("minus")
@@ -577,25 +611,169 @@ class ParserTest {
 	@Test
 	void testParenAssoc() throws Exception {
 		String input = "1+(1+1)";
-		Exp e = parseAndShow(input);
+		Exp e = parseExpAndShow(input);
 		Exp expected = Expressions.makeBinary(Expressions.makeInt(1), OP_PLUS,Expressions.makeBinary(
 				Expressions.makeInt(1),OP_PLUS,Expressions.makeInt(1)));
 		show("expected=" + expected);
 		assertEquals(expected,e);
 		
 		input = "-(1+1)";
-		e = parseAndShow(input);
+		e = parseExpAndShow(input);
 		expected = Expressions.makeExpUnary(OP_MINUS,Expressions.makeBinary(
 				Expressions.makeInt(1),OP_PLUS,Expressions.makeInt(1)));
 		show("expected=" + expected);
 		assertEquals(expected,e);
 		
 		input = "- - -(1+1)";
-		e = parseAndShow(input);
+		e = parseExpAndShow(input);
 		expected = Expressions.makeExpUnary(OP_MINUS,Expressions.makeExpUnary(OP_MINUS,Expressions.makeExpUnary(OP_MINUS,Expressions.makeBinary(
 				Expressions.makeInt(1),OP_PLUS,Expressions.makeInt(1)))));
 		show("expected=" + expected);
 		assertEquals(expected,e);
 		
+	}
+	
+	
+	///From this line, all tests are on Parsing 
+	
+	
+	@Test
+	void testEmpty1() throws Exception {
+		String input = "";
+		Block b = parseBlockAndShow(input);
+		Block expected = Expressions.makeBlock();
+		assertEquals(expected, b);
+	}
+	
+	@Test
+	void testEmpty2() throws Exception {
+		String input = "";
+		ASTNode n = parseAndShow(input);
+		Block b = Expressions.makeBlock();
+		Chunk expected = new Chunk(b.firstToken,b);
+		assertEquals(expected,n);
+	}
+	
+	@Test
+	void testAssign1() throws Exception {
+		String input = "a=b";
+		Block b = parseBlockAndShow(input);		
+		List<Exp> lhs = Expressions.makeExpList(Expressions.makeExpName("a"));
+		List<Exp> rhs = Expressions.makeExpList(Expressions.makeExpName("b"));
+		StatAssign s = Expressions.makeStatAssign(lhs,rhs);
+		Block expected = Expressions.makeBlock(s);
+		assertEquals(expected,b);
+	}
+	
+	@Test
+	void testAssignChunk1() throws Exception {
+		String input = "a=b";
+		ASTNode c = parseAndShow(input);		
+		List<Exp> lhs = Expressions.makeExpList(Expressions.makeExpName("a"));
+		List<Exp> rhs = Expressions.makeExpList(Expressions.makeExpName("b"));
+		StatAssign s = Expressions.makeStatAssign(lhs,rhs);
+		Block b = Expressions.makeBlock(s);
+		Chunk expected = new Chunk(b.firstToken,b);
+		assertEquals(expected,c);
+	}
+	
+
+	@Test
+	void testMultiAssign1() throws Exception {
+		String input = "a,c=8,9";
+		Block b = parseBlockAndShow(input);		
+		List<Exp> lhs = Expressions.makeExpList(
+					Expressions.makeExpName("a")
+					,Expressions.makeExpName("c"));
+		Exp e1 = Expressions.makeExpInt(8);
+		Exp e2 = Expressions.makeExpInt(9);
+		List<Exp> rhs = Expressions.makeExpList(e1,e2);
+		StatAssign s = Expressions.makeStatAssign(lhs,rhs);
+		Block expected = Expressions.makeBlock(s);
+		assertEquals(expected,b);		
+	}
+	
+
+	
+
+	@Test
+	void testMultiAssign3() throws Exception {
+		String input = "a,c=8,f(x)";
+		Block b = parseBlockAndShow(input);		
+		List<Exp> lhs = Expressions.makeExpList(
+					Expressions.makeExpName("a")
+					,Expressions.makeExpName("c"));
+		Exp e1 = Expressions.makeExpInt(8);
+		List<Exp> args = new ArrayList<>();
+		args.add(Expressions.makeExpName("x"));
+		Exp e2 = Expressions.makeExpFunCall(Expressions.makeExpName("f"),args, null);
+		List<Exp> rhs = Expressions.makeExpList(e1,e2);
+		StatAssign s = Expressions.makeStatAssign(lhs,rhs);
+		Block expected = Expressions.makeBlock(s);
+		assertEquals(expected,b);			
+	}
+	
+
+	
+	@Test
+	void testAssignToTable() throws Exception {
+		String input = "g.a.b = 3";
+		Block bl = parseBlockAndShow(input);
+		ExpName g = Expressions.makeExpName("g");
+		ExpString a = Expressions.makeExpString("a");
+		Exp gtable = Expressions.makeExpTableLookup(g,a);
+		ExpString b = Expressions.makeExpString("b");
+		Exp v = Expressions.makeExpTableLookup(gtable, b);
+		Exp three = Expressions.makeExpInt(3);		
+		Stat s = Expressions.makeStatAssign(Expressions.makeExpList(v), Expressions.makeExpList(three));;
+		Block expected = Expressions.makeBlock(s);
+		assertEquals(expected,bl);
+	}
+	
+	@Test
+	void testAssignTableToVar() throws Exception {
+		String input = "x = g.a.b";
+		Block bl = parseBlockAndShow(input);
+		ExpName g = Expressions.makeExpName("g");
+		ExpString a = Expressions.makeExpString("a");
+		Exp gtable = Expressions.makeExpTableLookup(g,a);
+		ExpString b = Expressions.makeExpString("b");
+		Exp e = Expressions.makeExpTableLookup(gtable, b);
+		Exp v = Expressions.makeExpName("x");		
+		Stat s = Expressions.makeStatAssign(Expressions.makeExpList(v), Expressions.makeExpList(e));;
+		Block expected = Expressions.makeBlock(s);
+		assertEquals(expected,bl);
+	}
+	
+
+	
+	@Test
+	void testmultistatements6() throws Exception {
+		String input = "x = g.a.b ; ::mylabel:: do  y = 2 goto mylabel f=a(0,200) end break"; //same as testmultistatements0 except ;
+		ASTNode c = parseAndShow(input);
+		ExpName g = Expressions.makeExpName("g");
+		ExpString a = Expressions.makeExpString("a");
+		Exp gtable = Expressions.makeExpTableLookup(g,a);
+		ExpString b = Expressions.makeExpString("b");
+		Exp e = Expressions.makeExpTableLookup(gtable, b);
+		Exp v = Expressions.makeExpName("x");		
+		Stat s0 = Expressions.makeStatAssign(v,e);
+		StatLabel s1 = Expressions.makeStatLabel("mylabel");
+		Exp y = Expressions.makeExpName("y");
+		Exp two = Expressions.makeExpInt(2);
+		Stat s2 = Expressions.makeStatAssign(y,two);
+		Stat s3 = Expressions.makeStatGoto("mylabel");
+		Exp f = Expressions.makeExpName("f");
+		Exp ae = Expressions.makeExpName("a");
+		Exp zero = Expressions.makeExpInt(0);
+		Exp twohundred = Expressions.makeExpInt(200);
+		List<Exp> args = Expressions.makeExpList(zero, twohundred);
+		ExpFunctionCall fc = Expressions.makeExpFunCall(ae, args, null);		
+		StatAssign s4 = Expressions.makeStatAssign(f,fc);
+		StatDo statdo = Expressions.makeStatDo(s2,s3,s4);
+		StatBreak statBreak = Expressions.makeStatBreak();
+		Block expectedBlock = Expressions.makeBlock(s0,s1,statdo,statBreak);
+		Chunk expectedChunk = new Chunk(expectedBlock.firstToken, expectedBlock);
+		assertEquals(expectedChunk,c);
 	}
 }
