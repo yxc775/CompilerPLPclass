@@ -741,15 +741,15 @@ public class Parser {
  		else if(isKind(KW_for)) {
  			consume();
  			List<ExpName> namelist = expnamelist(); 	
- 			if(namelist.size() == 1) {
+ 			if(namelist.size() == 1 && isKind(ASSIGN)) {
  				ExpName name = namelist.get(0);
- 				match(ASSIGN);
+ 				consume();
  				Exp ebg = exp();
  				match(COMMA);
  				Exp eed = exp();
  				Exp einc = null;
  				if(isKind(COMMA)) {
- 					match(COMMA);
+ 					consume();
  					einc = exp();
  				}
  				match(KW_do);
@@ -939,7 +939,7 @@ public class Parser {
 			//Syntactic sugar
 			if(isKind(NAME)) {
 				Token name = consume();
-				ExpName key = new ExpName(name);
+				ExpString key = new ExpString(name);
 				List<Exp> args = args();
 				args.add(0,tf);
 				if(!hasprefixtail()) {

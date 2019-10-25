@@ -1025,7 +1025,64 @@ class ParserTest {
 	@Test
 	
 	void spotCheck() throws Exception{
+		String input = "function x,a,b () ::a:: end";
+		Chunk n = parseAndShow(input);		
+		Stat e = Expressions.makeStatLabel("a");
+		Block b = Expressions.makeBlock(e);
+		List<ExpName> names = new ArrayList<>();
+		names.add(new ExpName(new Token(NAME,"x",0,0)));
+		names.add(new ExpName(new Token(NAME,"a",0,0)));
+		names.add(new ExpName(new Token(NAME,"b",0,0)));
 		
+		FuncName fn = new FuncName(new Token(NAME,"x",0,0),names,null);
+		FuncBody fb = new FuncBody(new Token(COLONCOLON,"::",0,0),null,b);
+		Stat w = new StatFunction(new Token(KW_function,"function",0,0),fn,fb);
+		Block b2 = Expressions.makeBlock(w);
+		Chunk expected = new Chunk(b2.firstToken,b2);
+		assertEquals(expected,n);
+		
+		input = "function x,a,b:b () ::a:: end";
+		n = parseAndShow(input);		
+		e = Expressions.makeStatLabel("a");
+		b = Expressions.makeBlock(e);
+		names = new ArrayList<>();
+		names.add(new ExpName(new Token(NAME,"x",0,0)));
+		names.add(new ExpName(new Token(NAME,"a",0,0)));
+		names.add(new ExpName(new Token(NAME,"b",0,0)));
+		
+		fn = new FuncName(new Token(NAME,"x",0,0),names,new ExpName(new Token(NAME,"b",0,0)));
+		fb = new FuncBody(new Token(COLONCOLON,"::",0,0),null,b);
+		w = new StatFunction(new Token(KW_function,"function",0,0),fn,fb);
+		b2 = Expressions.makeBlock(w);
+		expected = new Chunk(b2.firstToken,b2);
+		assertEquals(expected,n);
+	}
+	
+	@Test
+	void testSyntaticSugar() throws Exception{
+		String input = "g.a.b = 3";
+		String input2 = "g.a[\"b\"] = 3";
+		Block bl = parseBlockAndShow(input);
+		Block br = parseBlockAndShow(input2);
+		assertEquals(br,bl);
+		
+		input = "g.a.b = 3";
+		input2 = "g[\"a\"][\"b\"] = 3";
+		bl = parseBlockAndShow(input);
+		br = parseBlockAndShow(input2);
+		assertEquals(br,bl);
+		
+		input = "x = v:name(a)";
+		input2 = "x = v.name(v,a)";
+		bl = parseBlockAndShow(input);
+		br = parseBlockAndShow(input2);
+		assertEquals(br,bl);
+		
+		input = "x = v:name(a):call(b)";
+		input2 = "x = v.name(v,a).call(v.name(v,a),b)";
+		bl = parseBlockAndShow(input);
+		br = parseBlockAndShow(input2);
+		assertEquals(br,bl);
 	}
 	
 	
