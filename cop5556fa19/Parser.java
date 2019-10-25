@@ -531,7 +531,7 @@ public class Parser {
  			return e0;
  		}
  		else {
- 			error(t,"illegal terminal statement");
+ 			error(t,"illegal terminal statement " + t.getName());
  			return null;
  		}
  	}
@@ -784,6 +784,7 @@ public class Parser {
  				List<ExpName> namelist = expnamelist();
  				List<Exp> explist = null;
  				if(isKind(ASSIGN)) {
+ 					consume();
  					explist = explist();
  				}
  				return new StatLocalAssign(first,namelist,explist);

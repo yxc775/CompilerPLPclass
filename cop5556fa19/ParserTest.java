@@ -48,13 +48,24 @@ import cop5556fa19.AST.Field;
 import cop5556fa19.AST.FieldExpKey;
 import cop5556fa19.AST.FieldImplicitKey;
 import cop5556fa19.AST.FieldNameKey;
+import cop5556fa19.AST.FuncBody;
+import cop5556fa19.AST.FuncName;
 import cop5556fa19.AST.Name;
 import cop5556fa19.AST.ParList;
+import cop5556fa19.AST.RetStat;
 import cop5556fa19.AST.Stat;
 import cop5556fa19.AST.StatAssign;
 import cop5556fa19.AST.StatBreak;
 import cop5556fa19.AST.StatDo;
+import cop5556fa19.AST.StatFor;
+import cop5556fa19.AST.StatForEach;
+import cop5556fa19.AST.StatFunction;
+import cop5556fa19.AST.StatIf;
 import cop5556fa19.AST.StatLabel;
+import cop5556fa19.AST.StatLocalAssign;
+import cop5556fa19.AST.StatLocalFunc;
+import cop5556fa19.AST.StatRepeat;
+import cop5556fa19.AST.StatWhile;
 import cop5556fa19.Parser.SyntaxException;
 
 class ParserTest {
@@ -776,4 +787,246 @@ class ParserTest {
 		Chunk expectedChunk = new Chunk(expectedBlock.firstToken, expectedBlock);
 		assertEquals(expectedChunk,c);
 	}
+	
+	//
+	@Test
+	void testBlock() throws Exception{
+		String input = "a=b; return";
+		Block b = parseBlockAndShow(input);		
+		List<Exp> lhs = Expressions.makeExpList(Expressions.makeExpName("a"));
+		List<Exp> rhs = Expressions.makeExpList(Expressions.makeExpName("b"));
+		StatAssign s = Expressions.makeStatAssign(lhs,rhs);
+		RetStat r = new RetStat(new Token(KW_return,"return",0,0),null);
+		Block expected = Expressions.makeBlock(s,r);
+		assertEquals(expected,b);
+		
+		input = "return a";
+		b = parseBlockAndShow(input);	
+		List<Exp> exps = new ArrayList<>();
+		exps.add(new ExpName(new Token(NAME,"a",0,0)));
+		r = new RetStat(new Token(KW_return,"return",0,0),exps);
+		expected = Expressions.makeBlock(r);
+		assertEquals(expected,b);
+		
+		input = "a=b; return a";
+		b = parseBlockAndShow(input);		
+	    lhs = Expressions.makeExpList(Expressions.makeExpName("a"));
+		rhs = Expressions.makeExpList(Expressions.makeExpName("b"));
+		s = Expressions.makeStatAssign(lhs,rhs);
+		exps = new ArrayList<>();
+		exps.add(new ExpName(new Token(NAME,"a",0,0)));
+		r = new RetStat(new Token(KW_return,"return",0,0),exps);
+		expected = Expressions.makeBlock(s,r);
+		assertEquals(expected,b);
+		
+		input = "a=b; return a;";
+		b = parseBlockAndShow(input);		
+	    lhs = Expressions.makeExpList(Expressions.makeExpName("a"));
+		rhs = Expressions.makeExpList(Expressions.makeExpName("b"));
+		s = Expressions.makeStatAssign(lhs,rhs);
+		exps = new ArrayList<>();
+		exps.add(new ExpName(new Token(NAME,"a",0,0)));
+		r = new RetStat(new Token(KW_return,"return",0,0),exps);
+		expected = Expressions.makeBlock(s,r);
+		assertEquals(expected,b);
+		
+		input = "a=b; return a,b;";
+		b = parseBlockAndShow(input);		
+	    lhs = Expressions.makeExpList(Expressions.makeExpName("a"));
+		rhs = Expressions.makeExpList(Expressions.makeExpName("b"));
+		s = Expressions.makeStatAssign(lhs,rhs);
+		exps = new ArrayList<>();
+		exps.add(new ExpName(new Token(NAME,"a",0,0)));
+		exps.add(new ExpName(new Token(NAME,"b",0,0)));
+		r = new RetStat(new Token(KW_return,"return",0,0),exps);
+		expected = Expressions.makeBlock(s,r);
+		assertEquals(expected,b);
+	}
+	
+	@Test
+	void testStatFromTopToBot() throws Exception{
+		String input = ";";
+		ASTNode n = parseAndShow(input);
+		Block b = Expressions.makeBlock();
+		Chunk expected = new Chunk(b.firstToken,b);
+		assertEquals(expected,n);
+		
+		input = "::a::";
+		n = parseAndShow(input);		
+		Stat e = Expressions.makeStatLabel("a") ;
+		b = Expressions.makeBlock(e);
+		expected = new Chunk(b.firstToken,b);
+		assertEquals(expected,n);
+		
+		input = "break";
+		n = parseAndShow(input);		
+		e = Expressions.makeStatBreak() ;
+		b = Expressions.makeBlock(e);
+		expected = new Chunk(b.firstToken,b);
+		assertEquals(expected,n);
+		
+		input = "goto b";
+		n = parseAndShow(input);		
+		e = Expressions.makeStatGoto("b") ;
+		b = Expressions.makeBlock(e);
+		expected = new Chunk(b.firstToken,b);
+		assertEquals(expected,n);
+		
+		input = "do ::a:: end";
+		n = parseAndShow(input);		
+		e = Expressions.makeStatDo(Expressions.makeStatLabel("a"));
+		b = Expressions.makeBlock(e);
+		expected = new Chunk(b.firstToken,b);
+		assertEquals(expected,n);
+		
+		input = "while true do ::a:: end";
+		n = parseAndShow(input);		
+		e = Expressions.makeStatLabel("a");
+		b = Expressions.makeBlock(e);
+		Stat w = new StatWhile(new Token(KW_while,"while",0,0),new ExpTrue(new Token(KW_true,"true",0,0)),b);
+		Block b2 = Expressions.makeBlock(w);
+		expected = new Chunk(b2.firstToken,b2);
+		assertEquals(expected,n);
+		
+		input = "repeat ::a:: until true";
+		n = parseAndShow(input);		
+		e = Expressions.makeStatLabel("a");
+		b = Expressions.makeBlock(e);
+		w = new StatRepeat(new Token(KW_repeat,"repeat",0,0),b,new ExpTrue(new Token(KW_true,"true",0,0)));
+		b2 = Expressions.makeBlock(w);
+		expected = new Chunk(b2.firstToken,b2);
+		assertEquals(expected,n);
+		
+		input = "if true then ::a:: end";
+		n = parseAndShow(input);		
+		List<Exp> cods = new ArrayList<>();
+		cods.add(new ExpTrue(new Token(KW_true,"true",0,0)));
+		List<Block> bs = new ArrayList<>();
+		bs.add(Expressions.makeBlock(Expressions.makeStatLabel("a")));
+		w = new StatIf(new Token(KW_if,"if",0,0),cods,bs);
+		b2 = Expressions.makeBlock(w);
+		expected = new Chunk(b2.firstToken,b2);
+		assertEquals(expected,n);
+		
+		input = "if true then ::a:: elseif abc then ::b:: end";
+		n = parseAndShow(input);		
+		cods = new ArrayList<>();
+		cods.add(new ExpTrue(new Token(KW_true,"true",0,0)));
+		bs = new ArrayList<>();
+		bs.add(Expressions.makeBlock(Expressions.makeStatLabel("a")));
+		cods.add(Expressions.makeExpName("abc"));
+		bs.add(Expressions.makeBlock(Expressions.makeStatLabel("b")));
+		w = new StatIf(new Token(KW_if,"if",0,0),cods,bs);
+		b2 = Expressions.makeBlock(w);
+		expected = new Chunk(b2.firstToken,b2);
+		assertEquals(expected,n);
+		
+		input = "if true then ::a:: else ::b:: end";
+		n = parseAndShow(input);		
+		cods = new ArrayList<>();
+		cods.add(new ExpTrue(new Token(KW_true,"true",0,0)));
+		bs = new ArrayList<>();
+		bs.add(Expressions.makeBlock(Expressions.makeStatLabel("a")));
+		bs.add(Expressions.makeBlock(Expressions.makeStatLabel("b")));
+		w = new StatIf(new Token(KW_if,"if",0,0),cods,bs);
+		b2 = Expressions.makeBlock(w);
+		expected = new Chunk(b2.firstToken,b2);
+		assertEquals(expected,n);
+		
+		input = "for a = 1 , nil do ::a:: end";
+		n = parseAndShow(input);		
+		e = Expressions.makeStatLabel("a");
+		b = Expressions.makeBlock(e);
+		w = new StatFor(new Token(KW_for,"for",0,0),Expressions.makeExpName("a"),Expressions.makeInt(1),new ExpNil(new Token(KW_nil,"nil",0,0)),null,b);
+		b2 = Expressions.makeBlock(w);
+		expected = new Chunk(b2.firstToken,b2);
+		assertEquals(expected,n);
+		
+		input = "for a = 1 , nil,nil do ::a:: end";
+		n = parseAndShow(input);		
+		e = Expressions.makeStatLabel("a");
+		b = Expressions.makeBlock(e);
+		w = new StatFor(new Token(KW_for,"for",0,0),Expressions.makeExpName("a"),Expressions.makeInt(1),new ExpNil(new Token(KW_nil,"nil",0,0)),new ExpNil(new Token(KW_nil,"nil",0,0)),b);
+		b2 = Expressions.makeBlock(w);
+		expected = new Chunk(b2.firstToken,b2);
+		assertEquals(expected,n);
+		
+		
+		input = "for a,b,c in nil,nil,nil do ::a:: end";
+		n = parseAndShow(input);		
+		e = Expressions.makeStatLabel("a");
+		b = Expressions.makeBlock(e);
+		List<ExpName> namlist = new ArrayList<>();
+		List<Exp> explist = new ArrayList<>();
+		namlist.add(Expressions.makeExpName("a"));
+		namlist.add(Expressions.makeExpName("b"));
+		namlist.add(Expressions.makeExpName("c"));
+		explist.add(new ExpNil(new Token(KW_nil,"nil",0,0)));
+		explist.add(new ExpNil(new Token(KW_nil,"nil",0,0)));
+		explist.add(new ExpNil(new Token(KW_nil,"nil",0,0)));
+	
+		w = new StatForEach(new Token(KW_for,"for",0,0),namlist,explist,b);
+		b2 = Expressions.makeBlock(w);
+		expected = new Chunk(b2.firstToken,b2);
+		assertEquals(expected,n);
+		
+		input = "function x () ::a:: end";
+		n = parseAndShow(input);		
+		e = Expressions.makeStatLabel("a");
+		b = Expressions.makeBlock(e);
+		List<ExpName> names = new ArrayList<>();
+		names.add(new ExpName(new Token(NAME,"x",0,0)));
+		FuncName fn = new FuncName(new Token(NAME,"x",0,0),names,null);
+		FuncBody fb = new FuncBody(new Token(COLONCOLON,"::",0,0),null,b);
+		w = new StatFunction(new Token(KW_function,"function",0,0),fn,fb);
+		b2 = Expressions.makeBlock(w);
+		expected = new Chunk(b2.firstToken,b2);
+		assertEquals(expected,n);
+		
+		
+		
+		
+		input = "local function x () ::a:: end";
+		n = parseAndShow(input);		
+		e = Expressions.makeStatLabel("a");
+		b = Expressions.makeBlock(e);
+		names = new ArrayList<>();
+		names.add(new ExpName(new Token(NAME,"x",0,0)));
+		fn = new FuncName(new Token(NAME,"x",0,0),names,null);
+		fb = new FuncBody(new Token(COLONCOLON,"::",0,0),null,b);
+		w = new StatLocalFunc(new Token(KW_local,"function",0,0),fn,fb);
+		b2 = Expressions.makeBlock(w);
+		expected = new Chunk(b2.firstToken,b2);
+		assertEquals(expected,n);
+		
+		
+		input = "local a,b,c = nil,nil,nil";
+		n = parseAndShow(input);		
+		e = Expressions.makeStatLabel("a");
+		b = Expressions.makeBlock(e);
+		names = new ArrayList<>();
+		names.add(new ExpName(new Token(NAME,"a",0,0)));
+		names.add(new ExpName(new Token(NAME,"b",0,0)));
+		names.add(new ExpName(new Token(NAME,"c",0,0)));
+		
+		List<Exp> varlist = new ArrayList<>();
+		varlist.add(new ExpNil(new Token(KW_nil,"nil",0,0)));
+		varlist.add(new ExpNil(new Token(KW_nil,"nil",0,0)));
+		varlist.add(new ExpNil(new Token(KW_nil,"nil",0,0)));
+		
+		w = new StatLocalAssign(new Token(KW_local,"function",0,0),names,varlist);
+		b2 = Expressions.makeBlock(w);
+		expected = new Chunk(b2.firstToken,b2);
+		assertEquals(expected,n);
+		
+		
+	}
+	
+	@Test
+	
+	void spotCheck() throws Exception{
+		
+	}
+	
+	
 }
