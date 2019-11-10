@@ -76,7 +76,7 @@ public class Parser {
 	Token t;  //invariant:  this is the next token
 
 
-	Parser(Scanner s) throws Exception {
+	public Parser(Scanner s) throws Exception {
 		this.scanner = s;
 		t = scanner.getNext(); //establish invariant
 	}
@@ -684,7 +684,7 @@ public class Parser {
  			consume();
  			Name name = name();
  			match(COLONCOLON);
- 			return new StatLabel(first,name);
+ 			return new StatLabel(first,name,null,0);
  		}
  		else if(isKind(KW_break)) {
  			consume();

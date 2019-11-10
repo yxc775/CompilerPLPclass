@@ -1,10 +1,23 @@
 package cop5556fa19.AST;
 
 import cop5556fa19.Token;
+import interpreter.StaticAnalysis;
 
 public class Chunk extends ASTNode {
 	
+	
 	public final Block block;
+	int numLocals;
+	
+	public int getNumLocals() {
+		return numLocals;
+	}
+
+
+	public void setNumLocals(int numLocals) {
+		this.numLocals = numLocals;
+	}
+
 
 	public Chunk(Token firstToken, Block b) {
 		super(firstToken);
@@ -14,7 +27,7 @@ public class Chunk extends ASTNode {
 	
 	@Override
 	public String toString() {
-		return "Chunk [block=" + block + ", firstToken=" + firstToken + "]";
+		return "Chunk [block=" + block +  "]";
 	}
 
 	
@@ -50,5 +63,5 @@ public class Chunk extends ASTNode {
 	public Object visit(ASTVisitor v, Object arg) throws Exception {
 		return v.visitChunk(this,arg);
 	}
-
+	
 }
