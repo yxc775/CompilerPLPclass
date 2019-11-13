@@ -4,7 +4,6 @@ import java.io.Reader;
 
 import java.util.List;
 
-import cop5556fa19.BuildSymbolTable;
 import cop5556fa19.Parser;
 import cop5556fa19.Scanner;
 import cop5556fa19.AST.*;

@@ -188,7 +188,7 @@ import interpreter.StaticSemanticException;
 		
 		@Test 
 		void if3() throws Exception {
-			String input = "if x then x=3 elseif y then y=4 elseif true then x=10 goto label1 else y=11 end z = 12 ::label1:: y=20 return x,y,z";
+			String input = "if x then xi=3 elseif y then y=4 elseif true then x=10 goto label1 else y=11 end z = 12 ::label1:: y=20 return x,y,z";
 			show(input);
 			List<LuaValue> ret = interpret(input);
 			show(ret);
