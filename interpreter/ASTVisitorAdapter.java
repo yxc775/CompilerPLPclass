@@ -1,6 +1,7 @@
 package interpreter;
 
 import java.io.Reader;
+import java.text.Collator;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -88,13 +89,26 @@ public abstract class ASTVisitorAdapter implements ASTVisitor {
 		if(isArithOP(operation)) {
 			LuaInt e1int = null;
 			LuaInt e2int = null;
-			if(e1exp instanceof LuaInt && e2exp instanceof LuaInt) {
+			if(e1exp instanceof LuaInt) {
 				e1int = (LuaInt)e1exp;
-				e2int = (LuaInt)e2exp;
+			}
+			else if(e1exp instanceof LuaString){
+				e1int = new LuaInt(Integer.parseInt(((LuaString)e1exp).value));
 			}
 			else {
 				throw new TypeException(expBin.firstToken,"illegal arithmetic operation used on non-int val");
 			}
+			
+			if(e2exp instanceof LuaInt) {
+				e2int = (LuaInt)e2exp;
+			}
+			else if(e2exp instanceof LuaString){
+				e2int = new LuaInt(Integer.parseInt(((LuaString)e2exp).value));
+			}
+			else {
+				throw new TypeException(expBin.firstToken,"illegal arithmetic operation used on non-int val");
+			}
+			
 		    switch(operation) {
 			case OP_PLUS:
 				return new LuaInt(e1int.v + e2int.v);
@@ -109,9 +123,9 @@ public abstract class ASTVisitorAdapter implements ASTVisitor {
 				return new LuaInt(e1int.v / e2int.v);
 			case OP_DIVDIV:
 				if(e2int.v == 0) {
-					throw new TypeException(expBin.firstToken,"divide divide by 0!");
+					throw new TypeException(expBin.firstToken,"floor divide by 0!");
 				}
-				return new LuaInt((e1int.v / e2int.v)/e2int.v);
+				return new LuaInt(Math.floorDiv(e1int.v, e2int.v));
 			case OP_POW:
 				return new LuaInt((int)Math.pow((double)e1int.v, (double)e2int.v));
 			case OP_MOD:
@@ -134,7 +148,7 @@ public abstract class ASTVisitorAdapter implements ASTVisitor {
 			}
 		}
 		else if(isRelational(operation)) {
-			if((e1exp instanceof LuaInt && e1exp instanceof LuaString) || (e2exp instanceof LuaInt && e1exp instanceof LuaString) ) {
+			if((e1exp instanceof LuaInt && e1exp instanceof LuaString) || (e2exp instanceof LuaInt && e1exp instanceof LuaString)) {
 				if(operation == Token.Kind.REL_EQEQ) {
 					return new LuaBoolean(false);
 				}
@@ -145,48 +159,51 @@ public abstract class ASTVisitorAdapter implements ASTVisitor {
 					throw new TypeException(expBin.firstToken,"illegal Int/String operation!");
 				}
 			}
-			
-			if(e1exp instanceof LuaString && e2exp instanceof LuaString) {
+			else if(e1exp instanceof LuaString && e2exp instanceof LuaString) {
 				LuaString e1str = (LuaString)e1exp;
 				LuaString e2str = (LuaString)e2exp;
-				
-				if(operation == Token.Kind.REL_EQEQ) {
+				Collator locale = Collator.getInstance();
+				switch(operation) {
+				case REL_LT:
+					return new LuaBoolean(locale.compare(e1str.value, e2str.value) < 0);
+				case REL_LE:
+					return new LuaBoolean(locale.compare(e1str.value, e2str.value) <= 0);
+				case REL_GT:
+					return new LuaBoolean(locale.compare(e1str.value, e2str.value) > 0);
+				case REL_GE:
+					return new LuaBoolean(locale.compare(e1str.value, e2str.value) >= 0);
+				case REL_EQEQ:
 					return new LuaBoolean(e1str.value.equals(e2str.value));
-				}
-				else if(operation == Token.Kind.REL_NOTEQ) {
+				case REL_NOTEQ:
 					return new LuaBoolean(!e1str.value.equals(e2str.value));
-				}
-				else {
+				default:
 					throw new TypeException(expBin.firstToken,"illegal String operation!");
-				}
+				}	
 			}
-			
-			LuaInt e1int = null;
-			LuaInt e2int = null;
-			if(e1exp instanceof LuaInt && e2exp instanceof LuaInt) {
-				e1int = (LuaInt)e1exp;
-				e2int = (LuaInt)e2exp;
+			else if(e1exp instanceof LuaInt && e2exp instanceof LuaInt) {
+				LuaInt e1int = (LuaInt)e1exp;
+				LuaInt e2int = (LuaInt)e2exp;
+				
+				switch(operation) {
+					case REL_LT:
+						return new LuaBoolean(e1int.v < e2int.v);
+					case REL_LE:
+						return new LuaBoolean(e1int.v <= e2int.v);
+					case REL_GT:
+						return new LuaBoolean(e1int.v > e2int.v);
+					case REL_GE:
+						return new LuaBoolean(e1int.v >= e2int.v);
+					case REL_EQEQ:
+						return new LuaBoolean(e1int.v == e2int.v);
+					case REL_NOTEQ:
+						return new LuaBoolean(e1int.v != e2int.v);
+					default:
+						throw new TypeException(expBin.firstToken,"unknown relation operator!");
+				}	
 			}
 			else {
-				throw new TypeException(expBin.firstToken,"non int object used with relational operator!");
+				throw new TypeException(expBin.firstToken,"invalid operands on relation operators!");
 			}
-			
-			switch(operation) {
-				case REL_LT:
-					return new LuaBoolean(e1int.v < e2int.v);
-				case REL_LE:
-					return new LuaBoolean(e1int.v <= e2int.v);
-				case REL_GT:
-					return new LuaBoolean(e1int.v > e2int.v);
-				case REL_GE:
-					return new LuaBoolean(e1int.v >= e2int.v);
-				case REL_EQEQ:
-					return new LuaBoolean(e1int.v == e2int.v);
-				case REL_NOTEQ:
-					return new LuaBoolean(e1int.v != e2int.v);
-				default:
-					throw new TypeException(expBin.firstToken,"unknown relation operator!");
-			}	
 		}
 		else if(isLogical(operation)) {
 			switch(operation) {
@@ -295,19 +312,34 @@ public abstract class ASTVisitorAdapter implements ASTVisitor {
 
 	@Override
 	public Object visitName(Name name, Object arg) {
-		throw new UnsupportedOperationException();
+		LuaTable globalen = (LuaTable)arg;
+		if(globalen.get(name.name) != null) {
+			return globalen.get(name.name);
+		}
+		else {
+			return LuaNil.nil;
+		}
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public Object visitBlock(Block block, Object arg) throws Exception {
 		List<LuaValue> res = new LinkedList<>();
 		for(Stat statement: block.stats) {
-			List<LuaValue> item = (List<LuaValue>)statement.visit(this, arg);
-			if(!item.isEmpty()) {
-				res.addAll(item);
+			Object item = statement.visit(this, arg);
+			if(item instanceof List<?>) {
+				if(!((List<?>) item).isEmpty() && ((List<?>) item).get(0) instanceof LuaValue) {
+					res.addAll((List<LuaValue>)item);
+					break;
+				}
 			}
 		}
-		return res;
+		if(res.isEmpty()) {
+			return null;
+		}
+		else {
+			return res;
+		}
 	}
 
 	@Override
@@ -327,7 +359,7 @@ public abstract class ASTVisitorAdapter implements ASTVisitor {
 
 	@Override
 	public Object visitStatDo(StatDo statDo, Object arg) throws Exception {
-		throw new UnsupportedOperationException();
+		return statDo.b.visit(this, arg);
 	}
 
 	@Override
@@ -342,6 +374,25 @@ public abstract class ASTVisitorAdapter implements ASTVisitor {
 
 	@Override
 	public Object visitStatIf(StatIf statIf, Object arg) throws Exception {
+		int chose = -1;
+		for(int i = 0; i < statIf.es.size(); i ++) {
+			Exp exp = statIf.es.get(i);
+			LuaValue item = null;
+			if(exp instanceof ExpName) {
+				item = ((LuaTable)arg).get((LuaString)exp.visit(this, arg));
+			}
+			else {
+				item = (LuaValue)exp.visit(this, arg);
+			}
+			
+			if(item instanceof LuaBoolean) {
+				if(((LuaBoolean)item).value) {
+					chose = i;
+					return statIf.bs.get(i).visit(this, arg);
+				}
+			}
+		}
+		
 		throw new UnsupportedOperationException();
 	}
 
@@ -379,7 +430,19 @@ public abstract class ASTVisitorAdapter implements ASTVisitor {
 	public Object visitRetStat(RetStat retStat, Object arg) throws Exception {
 		List<LuaValue> retvalues = new LinkedList<>();
 		for(Exp expression: retStat.el) {
-			retvalues.add((LuaValue)expression.visit(this, arg));
+			LuaValue item = null;
+			if(expression instanceof ExpName) {
+				item = ((LuaTable)arg).get((LuaString)expression.visit(this, arg));
+			}
+			else {
+				item = (LuaValue)expression.visit(this, arg);
+			}
+			if(item != null) {
+				retvalues.add(item);
+			}
+			else {
+				retvalues.add(LuaNil.nil);
+			}
 		}
 		return retvalues;
 	}
@@ -406,12 +469,12 @@ public abstract class ASTVisitorAdapter implements ASTVisitor {
 
 	@Override
 	public Object visitExpTrue(ExpTrue expTrue, Object arg) {
-		throw new UnsupportedOperationException();
+		return new LuaBoolean(true);
 	}
 
 	@Override
 	public Object visitExpFalse(ExpFalse expFalse, Object arg) {
-		throw new UnsupportedOperationException();
+		return new LuaBoolean(false);
 	}
 
 	@Override
@@ -426,7 +489,37 @@ public abstract class ASTVisitorAdapter implements ASTVisitor {
 
 	@Override
 	public Object visitStatAssign(StatAssign statAssign, Object arg) throws Exception {
-		throw new UnsupportedOperationException();
+		LuaTable globalen = (LuaTable)arg;
+		List<LuaValue> assigned = new LinkedList<>();
+		
+		for(Exp val: statAssign.expList) {
+			LuaValue item = null;
+			if(val instanceof ExpName) {
+				item = ((LuaTable)arg).get((LuaString)val.visit(this, arg));
+			}
+			else {
+				item = ((LuaValue)val.visit(this, arg));
+			}
+			
+			if(item != null) {
+				assigned.add(item);
+			}
+			else {
+				assigned.add(LuaNil.nil);
+			}
+		}
+		
+		for(int i = 0; i < statAssign.varList.size();i++) {
+			LuaValue name = (LuaValue)statAssign.varList.get(i).visit(this, arg);
+			if(i < assigned.size()) {
+				globalen.put(name, assigned.get(i));
+			}
+			else {
+				globalen.put(name,(LuaValue)LuaNil.nil);
+			}
+		}
+		
+		return arg;
 	}
 
 	@Override
@@ -451,7 +544,7 @@ public abstract class ASTVisitorAdapter implements ASTVisitor {
 
 	@Override
 	public Object visitExpName(ExpName expName, Object arg) {
-		throw new UnsupportedOperationException();
+		return new LuaString(expName.name);
 	}
 
 
