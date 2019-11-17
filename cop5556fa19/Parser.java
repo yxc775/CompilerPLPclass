@@ -998,7 +998,6 @@ public class Parser {
 		res.add(exp());
 		while(isKind(COMMA)) {
 			consume();
-			System.out.println(t.toString());
 			res.add(exp());
 		}
 		return res; 		

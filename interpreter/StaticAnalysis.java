@@ -1,9 +1,11 @@
 package interpreter;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Stack;
 
 import cop5556fa19.AST.ASTVisitor;
 import cop5556fa19.AST.Block;
@@ -47,7 +49,7 @@ import cop5556fa19.AST.StatRepeat;
 import cop5556fa19.AST.StatWhile;
 
 public class StaticAnalysis implements ASTVisitor{
-	public List<Map<String,StatLabel>> scope = new LinkedList<>();
+	public Stack<Map<String,StatLabel>> scope = new Stack<>();
 	@Override
 	public Object visitExpNil(ExpNil expNil, Object arg) throws Exception {
 		// TODO Auto-generated method stub
@@ -111,7 +113,7 @@ public class StaticAnalysis implements ASTVisitor{
 	@Override
 	public Object visitBlock(Block block, Object arg) throws Exception {
 		Map<String,StatLabel> maplabel = new HashMap<>();
-		scope.add(0,maplabel);
+		scope.push(maplabel);
 		for(int i = 0; i < block.stats.size(); i ++) {
 			Stat cur = block.stats.get(i);
 			if(cur instanceof StatLabel) {
@@ -126,13 +128,14 @@ public class StaticAnalysis implements ASTVisitor{
 			}
 		}
 		
+		
 		for(int i = 0; i < block.stats.size(); i ++) {
 			Stat cur = block.stats.get(i);
 			if(!(cur instanceof StatLabel)) {
 				cur.visit(this, arg);
 			}
 		}
-		scope.remove(0);		
+		scope.pop();		
 		return arg;
 	}
 
@@ -151,10 +154,11 @@ public class StaticAnalysis implements ASTVisitor{
 	@Override
 	public Object visitStatGoto(StatGoto statGoto, Object arg) throws Exception {
 		boolean exist = false;
-		for(int i = 0; i < scope.size(); i ++) {
-			if(scope.get(i).containsKey(statGoto.name)) {
+		for(int i = scope.size() - 1; i >= 0; i --) {
+			if(scope.get(i).containsKey(statGoto.name.name)) {
 				exist = true;
-				statGoto.label = scope.get(i).get(statGoto.name);
+				
+				statGoto.label = scope.get(i).get(statGoto.name.name);
 				break;
 			}
 		}

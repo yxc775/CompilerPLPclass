@@ -9,7 +9,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import org.junit.FixMethodOrder;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestMethodOrder;
 
 import cop5556fa19.Parser.SyntaxException;
 import interpreter.ASTVisitorAdapter;

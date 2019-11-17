@@ -2,11 +2,11 @@ package interpreter;
 
 import java.io.Reader;
 import java.text.Collator;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
 import cop5556fa19.Token;
-import cop5556fa19.Token.Kind;
 import cop5556fa19.AST.ASTVisitor;
 import cop5556fa19.AST.Block;
 import cop5556fa19.AST.Chunk;
@@ -287,7 +287,7 @@ public abstract class ASTVisitorAdapter implements ASTVisitor {
 
 	@Override
 	public Object visitExpString(ExpString expString, Object arg) {
-		throw new UnsupportedOperationException();
+		return new LuaString(expString.v);
 	}
 
 	@Override
@@ -312,28 +312,30 @@ public abstract class ASTVisitorAdapter implements ASTVisitor {
 
 	@Override
 	public Object visitName(Name name, Object arg) {
-		LuaTable globalen = (LuaTable)arg;
-		if(globalen.get(name.name) != null) {
-			return globalen.get(name.name);
-		}
-		else {
-			return LuaNil.nil;
-		}
+		throw new UnsupportedOperationException();
 	}
 
 	@SuppressWarnings("unchecked")
 	@Override
 	public Object visitBlock(Block block, Object arg) throws Exception {
 		List<LuaValue> res = new LinkedList<>();
-		for(Stat statement: block.stats) {
-			Object item = statement.visit(this, arg);
-			if(item instanceof List<?>) {
-				if(!((List<?>) item).isEmpty() && ((List<?>) item).get(0) instanceof LuaValue) {
-					res.addAll((List<LuaValue>)item);
+		//Find goto
+		int targetGoto = block.stats.size() - 1;
+		for(int i = 0; i <= targetGoto; i ++) {
+				Stat statement = block.stats.get(i);
+				Object item = statement.visit(this, arg);
+				if(item instanceof List<?>) {
+					if(!((List<?>) item).isEmpty() && ((List<?>) item).get(0) instanceof LuaValue) {
+						res.addAll((List<LuaValue>)item);
+						break;
+					}
+				}
+				
+				if(statement instanceof StatGoto) {
 					break;
 				}
-			}
 		}
+		
 		if(res.isEmpty()) {
 			return null;
 		}
@@ -341,6 +343,7 @@ public abstract class ASTVisitorAdapter implements ASTVisitor {
 			return res;
 		}
 	}
+	
 
 	@Override
 	public Object visitStatBreak(StatBreak statBreak, Object arg, Object arg2) {
@@ -354,7 +357,15 @@ public abstract class ASTVisitorAdapter implements ASTVisitor {
 
 	@Override
 	public Object visitStatGoto(StatGoto statGoto, Object arg) throws Exception {
-		throw new UnsupportedOperationException();
+		Block jumpto = statGoto.label.enclosingBlock;
+		int position = statGoto.label.index + 1;
+		List<Stat> statlist = new ArrayList<>();
+		for(int i = position; i < jumpto.stats.size(); i ++) {
+			statlist.add(jumpto.stats.get(i));
+		}
+		
+		Block destination = new Block(jumpto.firstToken,statlist);
+		return destination.visit(this, arg);
 	}
 
 	@Override
@@ -364,7 +375,19 @@ public abstract class ASTVisitorAdapter implements ASTVisitor {
 
 	@Override
 	public Object visitStatWhile(StatWhile statWhile, Object arg) throws Exception {
-		throw new UnsupportedOperationException();
+		Exp condition = statWhile.e;
+		Block statement = statWhile.b;
+		Object item = condition.visit(this, arg);
+		if(!((item instanceof LuaBoolean && !((LuaBoolean)item).value) || (item instanceof LuaNil))) {
+			Object retornot = statement.visit(this, arg);
+			if(!(retornot instanceof List<?>)) {
+				visitStatWhile(statWhile,arg);
+			}
+			else {
+				return retornot;
+			}
+		}
+		return LuaNil.nil;
 	}
 
 	@Override
@@ -377,23 +400,15 @@ public abstract class ASTVisitorAdapter implements ASTVisitor {
 		int chose = -1;
 		for(int i = 0; i < statIf.es.size(); i ++) {
 			Exp exp = statIf.es.get(i);
-			LuaValue item = null;
-			if(exp instanceof ExpName) {
-				item = ((LuaTable)arg).get((LuaString)exp.visit(this, arg));
-			}
-			else {
-				item = (LuaValue)exp.visit(this, arg);
-			}
+			LuaValue item = (LuaValue)exp.visit(this, arg);
 			
-			if(item instanceof LuaBoolean) {
-				if(((LuaBoolean)item).value) {
-					chose = i;
-					return statIf.bs.get(i).visit(this, arg);
-				}
+			if(!((item instanceof LuaBoolean && !((LuaBoolean)item).value) || (item instanceof LuaNil))) {
+				chose = i;
+				return statIf.bs.get(i).visit(this, arg);
 			}
 		}
 		
-		throw new UnsupportedOperationException();
+		return  LuaNil.nil;
 	}
 
 	@Override
@@ -430,19 +445,7 @@ public abstract class ASTVisitorAdapter implements ASTVisitor {
 	public Object visitRetStat(RetStat retStat, Object arg) throws Exception {
 		List<LuaValue> retvalues = new LinkedList<>();
 		for(Exp expression: retStat.el) {
-			LuaValue item = null;
-			if(expression instanceof ExpName) {
-				item = ((LuaTable)arg).get((LuaString)expression.visit(this, arg));
-			}
-			else {
-				item = (LuaValue)expression.visit(this, arg);
-			}
-			if(item != null) {
-				retvalues.add(item);
-			}
-			else {
-				retvalues.add(LuaNil.nil);
-			}
+			retvalues.add((LuaValue)expression.visit(this, arg));
 		}
 		return retvalues;
 	}
@@ -479,11 +482,13 @@ public abstract class ASTVisitorAdapter implements ASTVisitor {
 
 	@Override
 	public Object visitFuncBody(FuncBody funcBody, Object arg) throws Exception {
+		System.out.println("funcbo miss");
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
 	public Object visitExpVarArgs(ExpVarArgs expVarArgs, Object arg) {
+		System.out.println("EVA miss");
 		throw new UnsupportedOperationException();
 	}
 
@@ -493,24 +498,11 @@ public abstract class ASTVisitorAdapter implements ASTVisitor {
 		List<LuaValue> assigned = new LinkedList<>();
 		
 		for(Exp val: statAssign.expList) {
-			LuaValue item = null;
-			if(val instanceof ExpName) {
-				item = ((LuaTable)arg).get((LuaString)val.visit(this, arg));
-			}
-			else {
-				item = ((LuaValue)val.visit(this, arg));
-			}
-			
-			if(item != null) {
-				assigned.add(item);
-			}
-			else {
-				assigned.add(LuaNil.nil);
-			}
+			assigned.add(((LuaValue)val.visit(this, arg)));
 		}
 		
 		for(int i = 0; i < statAssign.varList.size();i++) {
-			LuaValue name = (LuaValue)statAssign.varList.get(i).visit(this, arg);
+			LuaValue name = new LuaString(((ExpName)statAssign.varList.get(i)).name);
 			if(i < assigned.size()) {
 				globalen.put(name, assigned.get(i));
 			}
@@ -519,32 +511,47 @@ public abstract class ASTVisitorAdapter implements ASTVisitor {
 			}
 		}
 		
-		return arg;
+		return LuaNil.nil;
 	}
 
 	@Override
 	public Object visitExpTableLookup(ExpTableLookup expTableLookup, Object arg) throws Exception {
+		System.out.println("lookup miss");
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
 	public Object visitExpFunctionCall(ExpFunctionCall expFunctionCall, Object arg) throws Exception {
-		throw new UnsupportedOperationException();
+		JavaFunction todo = (JavaFunction)(((LuaTable)arg).get(((ExpName)expFunctionCall.f).name));
+		List<LuaValue> input = new ArrayList<>();
+		for(Exp expr: expFunctionCall.args) {
+			input.add( (LuaValue)expr.visit(this, arg));
+		}
+		
+		todo.call(input);
+		return LuaNil.nil;
 	}
 
 	@Override
-	public Object visitLabel(StatLabel statLabel, Object ar) {
-		throw new UnsupportedOperationException();
+	public Object visitLabel(StatLabel statLabel, Object arg) {
+		return LuaNil.nil;
 	}
 
 	@Override
 	public Object visitFieldList(FieldList fieldList, Object arg) {
+		System.out.println("fieldlist miss");
 		throw new UnsupportedOperationException();
 	}
 
 	@Override
 	public Object visitExpName(ExpName expName, Object arg) {
-		return new LuaString(expName.name);
+		LuaValue toret = ((LuaTable)arg).get(expName.name);
+		if(toret != null) {
+			return toret;
+		}
+		else {
+			return LuaNil.nil;
+		}
 	}
 
 
