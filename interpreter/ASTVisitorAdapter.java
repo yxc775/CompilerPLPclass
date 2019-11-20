@@ -344,7 +344,7 @@ public abstract class ASTVisitorAdapter implements ASTVisitor {
 				Object item = statement.visit(this, arg);
 				if(item instanceof List<?>) {
 					if(!((List<?>) item).isEmpty() && ((List<?>) item).get(0) instanceof LuaValue) {
-						res.addAll((List<LuaValue>)item);
+						res = (List<LuaValue>)item;
 						break;
 					}
 				}
