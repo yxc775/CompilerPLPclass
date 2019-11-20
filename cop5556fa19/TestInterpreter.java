@@ -384,6 +384,29 @@ import interpreter.StaticSemanticException;
 		}
 		
 		@Test
+		void tablenested() throws Exception {
+			String input = "a = {{1,2}}; return a[1][1]";
+			show(input);
+			List<LuaValue> ret = interpret(input);
+			show(ret);
+			List<LuaValue> expected = new ArrayList<>(); 
+			expected.add(new LuaInt(1));
+			assertEquals(expected,ret);
+		}
+		
+		
+		@Test
+		void tablenestedAssign() throws Exception {
+			String input = "a = {{1,2}}; a[1][1] = 4;return a[1][1]";
+			show(input);
+			List<LuaValue> ret = interpret(input);
+			show(ret);
+			List<LuaValue> expected = new ArrayList<>(); 
+			expected.add(new LuaInt(4));
+			assertEquals(expected,ret);
+		}
+		
+		@Test
 		void table1() throws Exception {
 			String input = "a = {\"x\", 2, 3}; return a";
 			show(input);
