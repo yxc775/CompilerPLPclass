@@ -373,7 +373,7 @@ import interpreter.StaticSemanticException;
 		
 		@Test
 		void table0() throws Exception {
-			String input = "a = {}";
+			String input = "a = {}; return a";
 			show(input);
 			List<LuaValue> ret = interpret(input);
 			show(ret);
@@ -385,7 +385,7 @@ import interpreter.StaticSemanticException;
 		
 		@Test
 		void table1() throws Exception {
-			String input = "a = {\"x\", 2, 3}";
+			String input = "a = {\"x\", 2, 3}; return a";
 			show(input);
 			List<LuaValue> ret = interpret(input);
 			show(ret);
@@ -400,7 +400,7 @@ import interpreter.StaticSemanticException;
 		
 		@Test
 		void table2() throws Exception {
-			String input = "a = {[\"x\"]= 2, [\"y\"]=3}";
+			String input = "a = {[\"x\"]= 2, [\"y\"]=3}; return a";
 			show(input);
 			List<LuaValue> ret = interpret(input);
 			show(ret);			
@@ -414,7 +414,7 @@ import interpreter.StaticSemanticException;
 		
 		@Test
 		void table3() throws Exception {
-			String input = "a = {x=2, y=3}";
+			String input = "a = {x=2, y=3}; return a";
 			show(input);
 			List<LuaValue> ret = interpret(input);
 			show(ret);
@@ -429,7 +429,7 @@ import interpreter.StaticSemanticException;
 		
 		@Test
 		void table4() throws Exception {
-			String input = "x = \"hello\" y= \"goodbye\" a = {[x]=2, [y]=3}";
+			String input = "x = \"hello\" y= \"goodbye\" a = {[x]=2, [y]=3}; return a";
 			show(input);
 			List<LuaValue> ret = interpret(input);
 			show(ret);

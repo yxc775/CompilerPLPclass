@@ -51,7 +51,7 @@ import cop5556fa19.AST.StatRepeat;
 import cop5556fa19.AST.StatWhile;
 
 public abstract class ASTVisitorAdapter implements ASTVisitor {
-	
+	boolean isReturning = false;
 	@SuppressWarnings("serial")
 	public static class StaticSemanticException extends Exception{
 		
@@ -76,7 +76,6 @@ public abstract class ASTVisitorAdapter implements ASTVisitor {
 	}
 	
 	public abstract List<LuaValue> load(Reader r) throws Exception;
-
 	@Override
 	public Object visitExpNil(ExpNil expNil, Object arg) {
 		return LuaNil.nil;
@@ -337,16 +336,13 @@ public abstract class ASTVisitorAdapter implements ASTVisitor {
 	@Override
 	public Object visitBlock(Block block, Object arg) throws Exception {
 		List<LuaValue> res = new LinkedList<>();
-		//Find goto
 		int targetGoto = block.stats.size() - 1;
 		for(int i = 0; i <= targetGoto; i ++) {
 				Stat statement = block.stats.get(i);
 				Object item = statement.visit(this, arg);
 				if(item instanceof List<?>) {
-					if(!((List<?>) item).isEmpty() && ((List<?>) item).get(0) instanceof LuaValue) {
-						res = (List<LuaValue>)item;
-						break;
-					}
+					res = (List<LuaValue>)item;
+					return res;
 				}
 				
 				if(statement instanceof StatGoto) {
@@ -354,11 +350,11 @@ public abstract class ASTVisitorAdapter implements ASTVisitor {
 				}
 		}
 		
-		if(res.isEmpty()) {
-			return null;
+		if(res.size()>=1) {
+			return res;
 		}
 		else {
-			return res;
+			return null;
 		}
 	}
 	
@@ -468,6 +464,7 @@ public abstract class ASTVisitorAdapter implements ASTVisitor {
 		for(Exp expression: retStat.el) {
 			retvalues.add((LuaValue)expression.visit(this, arg));
 		}
+		this.isReturning = true;
 		return retvalues;
 	}
 
@@ -530,13 +527,24 @@ public abstract class ASTVisitorAdapter implements ASTVisitor {
 		}
 		
 		for(int i = 0; i < statAssign.varList.size();i++) {
-			LuaValue name = new LuaString(((ExpName)statAssign.varList.get(i)).name);
+			LuaValue key = null;
+			LuaValue variable = LuaNil.nil;
 			if(i < assigned.size()) {
-				globalen.put(name, assigned.get(i));
+				variable = assigned.get(i);
+			}
+			if(statAssign.varList.get(i) instanceof ExpName) {
+				key = new LuaString(((ExpName)statAssign.varList.get(i)).name);
+			}
+			else if(statAssign.varList.get(i) instanceof ExpTableLookup) {
+				LuaValue tk = (LuaValue)((ExpTableLookup)statAssign.varList.get(i)).key.visit(this, arg);
+				((LuaTable)((ExpTableLookup)statAssign.varList.get(i)).table.visit(this, arg)).put(tk, variable);
+				continue;
 			}
 			else {
-				globalen.put(name,(LuaValue)LuaNil.nil);
+				throw new TypeException(statAssign.firstToken,"unknown assigned Expression operator!");
 			}
+					
+			globalen.put(key, variable);
 		}
 		
 		return LuaNil.nil;
@@ -544,8 +552,15 @@ public abstract class ASTVisitorAdapter implements ASTVisitor {
 
 	@Override
 	public Object visitExpTableLookup(ExpTableLookup expTableLookup, Object arg) throws Exception {
-		System.out.println("lookup miss");
-		throw new UnsupportedOperationException();
+		LuaTable table = (LuaTable)expTableLookup.table.visit(this, arg);
+		LuaValue key = (LuaValue)expTableLookup.key.visit(this, arg);
+
+		if(table instanceof LuaTable) {
+			return table.get(key);
+		}
+		else {
+			throw new TypeException(expTableLookup.firstToken,"non-existed table detected");
+		}
 	}
 
 	@Override
