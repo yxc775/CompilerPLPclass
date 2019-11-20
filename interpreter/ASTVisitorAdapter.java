@@ -51,7 +51,8 @@ import cop5556fa19.AST.StatRepeat;
 import cop5556fa19.AST.StatWhile;
 
 public abstract class ASTVisitorAdapter implements ASTVisitor {
-	boolean isReturning = false;
+	boolean isbreaking = false;
+	boolean whileRunning = false;
 	@SuppressWarnings("serial")
 	public static class StaticSemanticException extends Exception{
 		
@@ -340,9 +341,16 @@ public abstract class ASTVisitorAdapter implements ASTVisitor {
 		for(int i = 0; i <= targetGoto; i ++) {
 				Stat statement = block.stats.get(i);
 				Object item = statement.visit(this, arg);
+				if(isbreaking) {
+					if(!whileRunning) {
+						isbreaking = false;
+					}
+					break;
+				}
+				
 				if(item instanceof List<?>) {
 					res = (List<LuaValue>)item;
-					return res;
+					break;
 				}
 				
 				if(statement instanceof StatGoto) {
@@ -350,6 +358,7 @@ public abstract class ASTVisitorAdapter implements ASTVisitor {
 				}
 		}
 		
+
 		if(res.size()>=1) {
 			return res;
 		}
@@ -358,15 +367,15 @@ public abstract class ASTVisitorAdapter implements ASTVisitor {
 		}
 	}
 	
-
 	@Override
 	public Object visitStatBreak(StatBreak statBreak, Object arg, Object arg2) {
-		throw new UnsupportedOperationException();
+		return arg;
 	}
 
 	@Override
 	public Object visitStatBreak(StatBreak statBreak, Object arg) throws Exception {
-		throw new UnsupportedOperationException();
+		this.isbreaking = true;
+		return LuaNil.nil;
 	}
 
 	@Override
@@ -392,17 +401,25 @@ public abstract class ASTVisitorAdapter implements ASTVisitor {
 		Exp condition = statWhile.e;
 		Block statement = statWhile.b;
 		Object item = condition.visit(this, arg);
+		if(isbreaking) {
+			isbreaking = false;
+			whileRunning = false;
+			return LuaNil.nil;
+		}
+		
 		if(!((item instanceof LuaBoolean && !((LuaBoolean)item).value) || (item instanceof LuaNil))) {
+			whileRunning = true;
 			Object retornot = statement.visit(this, arg);
 			if(!(retornot instanceof List<?>)) {
-				System.out.println("reach");
 				return visitStatWhile(statWhile,arg);
 			}
 			else {
+				whileRunning = false;
 				return retornot;
 			}
 		}
 		else {
+			whileRunning = false;
 			return LuaNil.nil;
 		}
 	}
@@ -464,7 +481,6 @@ public abstract class ASTVisitorAdapter implements ASTVisitor {
 		for(Exp expression: retStat.el) {
 			retvalues.add((LuaValue)expression.visit(this, arg));
 		}
-		this.isReturning = true;
 		return retvalues;
 	}
 
