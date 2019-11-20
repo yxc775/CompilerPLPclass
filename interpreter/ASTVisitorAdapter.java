@@ -25,6 +25,7 @@ import cop5556fa19.AST.ExpTableLookup;
 import cop5556fa19.AST.ExpTrue;
 import cop5556fa19.AST.ExpUnary;
 import cop5556fa19.AST.ExpVarArgs;
+import cop5556fa19.AST.Field;
 import cop5556fa19.AST.FieldExpKey;
 import cop5556fa19.AST.FieldImplicitKey;
 import cop5556fa19.AST.FieldList;
@@ -292,7 +293,24 @@ public abstract class ASTVisitorAdapter implements ASTVisitor {
 
 	@Override
 	public Object visitExpTable(ExpTable expTableConstr, Object arg) throws Exception {
-		throw new UnsupportedOperationException();
+		LuaTable newtable = new LuaTable();
+		for(Field element: expTableConstr.fields) {
+			if(element instanceof FieldImplicitKey) {
+				newtable.putImplicit((LuaValue)element.visit(this, arg));
+			}
+			else if(element instanceof FieldNameKey) {
+				Object[] ans = (Object[])element.visit(this,arg);
+				newtable.put((String)ans[0],(LuaValue)ans[1]);
+			}
+			else if(element instanceof FieldExpKey) {
+				Object[] ans = (Object[])element.visit(this,arg);
+				newtable.put((LuaValue)ans[0],(LuaValue)ans[1]);
+			}
+			else {
+				throw new TypeException(expTableConstr.firstToken,"illegal table construction detected");
+			}
+		}
+		return newtable;
 	}
 
 	@Override
@@ -381,13 +399,16 @@ public abstract class ASTVisitorAdapter implements ASTVisitor {
 		if(!((item instanceof LuaBoolean && !((LuaBoolean)item).value) || (item instanceof LuaNil))) {
 			Object retornot = statement.visit(this, arg);
 			if(!(retornot instanceof List<?>)) {
-				visitStatWhile(statWhile,arg);
+				System.out.println("reach");
+				return visitStatWhile(statWhile,arg);
 			}
 			else {
 				return retornot;
 			}
 		}
-		return LuaNil.nil;
+		else {
+			return LuaNil.nil;
+		}
 	}
 
 	@Override
@@ -457,17 +478,24 @@ public abstract class ASTVisitorAdapter implements ASTVisitor {
 
 	@Override
 	public Object visitFieldExpKey(FieldExpKey fieldExpKey, Object object) throws Exception {
-		throw new UnsupportedOperationException();
+		
+		Object[] ans = new Object[2];
+		ans[0] = fieldExpKey.key.visit(this, object);
+		ans[1] = fieldExpKey.value.visit(this, object);
+		return ans;
 	}
 
 	@Override
 	public Object visitFieldNameKey(FieldNameKey fieldNameKey, Object arg) throws Exception {
-		throw new UnsupportedOperationException();
+		Object[] ans = new Object[2];
+		ans[0] = fieldNameKey.name.name;
+		ans[1] = fieldNameKey.exp.visit(this, arg);
+		return ans;
 	}
 	
 	@Override
 	public Object visitFieldImplicitKey(FieldImplicitKey fieldImplicitKey, Object arg) throws Exception {
-		throw new UnsupportedOperationException();
+		return fieldImplicitKey.exp.visit(this, arg);
 	}
 
 	@Override
