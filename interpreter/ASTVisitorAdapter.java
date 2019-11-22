@@ -150,7 +150,7 @@ public abstract class ASTVisitorAdapter implements ASTVisitor {
 			}
 		}
 		else if(isRelational(operation)) {
-			if((e1exp instanceof LuaInt && e1exp instanceof LuaString) || (e2exp instanceof LuaInt && e1exp instanceof LuaString)) {
+			if((e1exp instanceof LuaInt && e2exp instanceof LuaString) || (e2exp instanceof LuaInt && e1exp instanceof LuaString)) {
 				if(operation == Token.Kind.REL_EQEQ) {
 					return new LuaBoolean(false);
 				}
@@ -647,8 +647,13 @@ public abstract class ASTVisitorAdapter implements ASTVisitor {
 			input.add( (LuaValue)expr.visit(this, arg));
 		}
 		
-		todo.call(input);
-		return LuaNil.nil;
+		Object item = todo.call(input);
+		if(item instanceof List<?> && ((List) item).size() == 1) {
+			return ((List<LuaValue>)item).get(0);
+		}
+		else {
+			return LuaNil.nil;
+		}
 	}
 
 	@Override

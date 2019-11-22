@@ -16,6 +16,7 @@ import org.junit.jupiter.api.TestMethodOrder;
 import cop5556fa19.Parser.SyntaxException;
 import interpreter.ASTVisitorAdapter;
 import interpreter.Interpreter;
+import interpreter.LuaBoolean;
 import interpreter.LuaInt;
 import interpreter.LuaNil;
 import interpreter.LuaString;
@@ -614,14 +615,80 @@ import interpreter.StaticSemanticException;
 		
 		@Test
 		void testBinary0() throws Exception{
-			String input = "a=2+3 b=3-a c=2*4 d = c/2 e = c%3 return a,b,c,d,e";
+			String input = "a=2+3 b=3-a c=2*4 d = c/2 e = c%3 k = e //2  u = e^4 return a,b,c,d,e,k,u";
 			show(input);
 			List<LuaValue> ret = interpret(input);
 			show(ret);	
-			List<LuaValue> expected = makeExpectedWithInts(5,-2,8,4,2);
+			List<LuaValue> expected = makeExpectedWithInts(5,-2,8,4,2,1,16);
 			assertEquals(expected,ret);						
 		}
 		
+		@Test
+		void testBinaryBitWise() throws Exception{
+			String input = "a=131 & 2 b = a | 3 c = b ~ 2\r\n" + 
+					"d = 55 >> 2 \r\n" + 
+					"e = 22 << 1 "
+					+ "return a,b,c,d,e";
+			show(input);
+			List<LuaValue> ret = interpret(input);
+			show(ret);	
+			List<LuaValue> expected = makeExpectedWithInts(2,3,1,13,44);
+			assertEquals(expected,ret);						
+		}
+		
+		@Test
+		void testOPStringIntObjectMix() throws Exception{
+			String input = "return 0 == \"123\"";
+			show(input);
+			List<LuaValue> ret = interpret(input);
+			show(ret);	
+			List<LuaValue> expected = new ArrayList<LuaValue>();
+			expected.add(new LuaBoolean(false));
+			assertEquals(expected,ret);			
+			
+			input = "return \"345\" > \"123\"";
+			show(input);
+			ret = interpret(input);
+			show(ret);	
+			expected = new ArrayList<LuaValue>();
+			expected.add(new LuaBoolean(true));
+			assertEquals(expected,ret);		
+			
+			input = "return 4 + \"123\"";
+			show(input);
+			ret = interpret(input);
+			show(ret);	
+			expected = makeExpectedWithInts(127);
+			assertEquals(expected,ret);		
+			
+			input = "return null and \"123\"";
+			show(input);
+			ret = interpret(input);
+			show(ret);	
+			expected = new ArrayList<LuaValue>();
+			expected.add(LuaNil.nil);
+			assertEquals(expected,ret);		
+			
+			input = "return null or \"123\"";
+			show(input);
+			ret = interpret(input);
+			show(ret);	
+			expected = new ArrayList<LuaValue>();
+			expected.add(new LuaString("123"));
+			assertEquals(expected,ret);		
+		}
+		
+		@Test
+		void testUnary() throws Exception{
+			String input = "a = 4 a = -a b = 5 b = not 5 c = \"hello\" c = #c d = ~35"
+					+ "return a,b,c,d";
+			show(input);
+			List<LuaValue> ret = interpret(input);
+			show(ret);	
+			List<LuaValue> expected = makeExpectedWithInts(-4,0,5,-36);
+			expected.set(1, new LuaBoolean(false));
+			assertEquals(expected,ret);						
+		}
 		
 		@Test
 		void testSetField0() throws Exception{
@@ -655,6 +722,19 @@ import interpreter.StaticSemanticException;
 			expected.put(new LuaInt(1), a);
 			assertEquals(expectedList,ret);
 		}
+		
+		@Test
+		void toNumberTest() throws Exception{
+		String input = "a = toNumber(\"33\"); return a";
+		show(input);
+		List<LuaValue> ret = interpret(input);
+		show(ret);
+		LuaValue[] vals = {new LuaInt(33)};
+		List<LuaValue> expected = Arrays.asList(vals);
+		assertEquals(expected, ret);
+		}
+
+		 
 		
 
 }
