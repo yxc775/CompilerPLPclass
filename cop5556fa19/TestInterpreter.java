@@ -289,6 +289,17 @@ import interpreter.StaticSemanticException;
 		}
 		
 		@Test
+		void whileDoubleWhile() throws Exception {
+			String input = "i = 5 j = 2 sum = 0 while j > 0 do while i>0 do sum = sum + i  i=i-1 end j = j-1 end return j,i";
+			show(input);
+			List<LuaValue> ret = interpret(input);
+			show(ret);
+			List<LuaValue> expected = makeExpectedWithInts(0,0);
+			assertEquals(expected,ret);
+		}
+		
+		
+		@Test
 		void break0() throws Exception {
 			String input = "x=1 do x=2 do x=3 do break x=4 y0=0 end y1=1 end y2=2 end return x,y0,y1,y2 ";
 			show(input);
@@ -322,6 +333,91 @@ import interpreter.StaticSemanticException;
 			assertEquals(expected,ret);			
 		}
 		
+		@Test
+		void doubleDoWhileBreak0() throws Exception {
+			String input = "i = 0\r\n" + 
+					"while i < 5 do do if i > 2 then break end i = i + 1 end end\r\n" + 
+					"return i";
+			show(input);
+			List<LuaValue> ret = interpret(input);
+			show(ret);
+			List<LuaValue> expected = makeExpectedWithInts(3);
+			assertEquals(expected,ret);			
+		}
+		
+		
+		@Test
+		void whileDoubleWhileBreak() throws Exception {
+			String input = "i = 5 j = 2 sum = 0 while j > 0 do while i>0 do if i < 4 then break end sum = sum + i  i=i-1 end j = j-1 end return j,i";
+			show(input);
+			List<LuaValue> ret = interpret(input);
+			show(ret);
+			List<LuaValue> expected = makeExpectedWithInts(0,3);
+			assertEquals(expected,ret);
+		}
+		
+		@Test
+		void repeat0() throws Exception {
+			String input = "i = 0;" + 
+					"repeat i = i + 1 until i > 5" + 
+					"return i";
+			show(input);
+			List<LuaValue> ret = interpret(input);
+			show(ret);
+			List<LuaValue> expected = makeExpectedWithInts(6);
+			assertEquals(expected,ret);
+		}
+		
+		@Test
+		void repeat0break() throws Exception {
+			String input = "i = 0;" + 
+					"\nrepeat i = i + 1" + 
+					"\nif i > 3 then break end" + 
+					"\nuntil i > 5" +
+					"\nreturn i";
+			show(input);
+			List<LuaValue> ret = interpret(input);
+			show(ret);
+			List<LuaValue> expected = makeExpectedWithInts(4);
+			assertEquals(expected,ret);
+		}
+		
+		@Test
+		void repeatWhilemixbreak() throws Exception {
+			String input = "i = 0;\r\n" + 
+					"j = 0;\r\n" + 
+					"while j < 2\r\n" + 
+					"do\r\n" + 
+					"\r\n" + 
+					"repeat i = i + 1 \r\n" + 
+					"if i > 3 then break end\r\n" + 
+					"until i > 5\r\n" + 
+					"j = j + 1\r\n" + 
+					"end\r\n" + 
+					"return i,j";
+			show(input);
+			List<LuaValue> ret = interpret(input);
+			show(ret);
+			List<LuaValue> expected = makeExpectedWithInts(5,2);
+			assertEquals(expected,ret);
+		}
+		
+		@Test
+		void repeat0Doublebreak() throws Exception {
+			String input = "i = 0;\r\n" + 
+					"j = 0;\r\n" + 
+					"repeat j = j + 1\r\n" + 
+					"repeat i = i + 1 \r\n" + 
+					"if i > 3 then break end\r\n" + 
+					"until i > 5\r\n" + 
+					"until j > 2\r\n" + 
+					"return i,j";
+			show(input);
+			List<LuaValue> ret = interpret(input);
+			show(ret);
+			List<LuaValue> expected = makeExpectedWithInts(6,3);
+			assertEquals(expected,ret);
+		}
 		
 		@Test
 		void whilebreak1() throws Exception {

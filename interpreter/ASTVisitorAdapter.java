@@ -53,6 +53,7 @@ import cop5556fa19.AST.StatWhile;
 public abstract class ASTVisitorAdapter implements ASTVisitor {
 	boolean isbreaking = false;
 	boolean whileRunning = false;
+	boolean repeationg = true;
 	@SuppressWarnings("serial")
 	public static class StaticSemanticException extends Exception{
 		
@@ -278,7 +279,43 @@ public abstract class ASTVisitorAdapter implements ASTVisitor {
 
 	@Override
 	public Object visitUnExp(ExpUnary unExp, Object arg) throws Exception {
-		throw new UnsupportedOperationException();
+		Token.Kind pre = unExp.op;
+		LuaValue val = (LuaValue)unExp.e.visit(this, arg);
+		switch(pre) {
+		case OP_MINUS:
+			if(val instanceof LuaInt) {
+				return new LuaInt(-((LuaInt)val).v);
+			}
+			else {
+				throw new  TypeException(unExp.firstToken,"cannot apply - on non-int val");
+			}
+		case KW_not:
+			if(val instanceof LuaBoolean) {
+				return new LuaBoolean(!((LuaBoolean)val).value);
+			}
+			else if(val instanceof LuaNil) {
+				return new LuaBoolean(true);
+			}
+			else {
+				return new LuaBoolean(false);
+			}
+		case OP_HASH:
+			if(val instanceof LuaString) {
+				return new LuaInt(((LuaString)val).value.length());
+			}
+			else {
+				throw new  TypeException(unExp.firstToken,"cannot apply # on non-String val");
+			}
+		case BIT_XOR:
+			if(val instanceof LuaInt) {
+				return new LuaInt(~((LuaInt)val).v);
+			}
+			else {
+				throw new  TypeException(unExp.firstToken,"cannot apply ~ on non-int val");
+			}
+		default:
+			throw new  TypeException(unExp.firstToken,"unknown unary operator");
+		}		
 	}
 
 	@Override
@@ -400,14 +437,14 @@ public abstract class ASTVisitorAdapter implements ASTVisitor {
 	public Object visitStatWhile(StatWhile statWhile, Object arg) throws Exception {
 		Exp condition = statWhile.e;
 		Block statement = statWhile.b;
-		Object item = condition.visit(this, arg);
+		Object state = condition.visit(this, arg);
 		if(isbreaking) {
 			isbreaking = false;
 			whileRunning = false;
 			return LuaNil.nil;
 		}
 		
-		if(!((item instanceof LuaBoolean && !((LuaBoolean)item).value) || (item instanceof LuaNil))) {
+		if(!((state instanceof LuaBoolean && !((LuaBoolean)state).value) || (state instanceof LuaNil))) {
 			whileRunning = true;
 			Object retornot = statement.visit(this, arg);
 			if(!(retornot instanceof List<?>)) {
@@ -426,7 +463,30 @@ public abstract class ASTVisitorAdapter implements ASTVisitor {
 
 	@Override
 	public Object visitStatRepeat(StatRepeat statRepeat, Object arg) throws Exception {
-		throw new UnsupportedOperationException();
+		Exp condition = statRepeat.e;
+		Block statement = statRepeat.b;
+		whileRunning = true;
+		Object toreturn = statement.visit(this, arg);
+		if(isbreaking) {
+			isbreaking = false;
+			whileRunning = false;
+			return LuaNil.nil;
+		}
+		Object  state = condition.visit(this, arg);
+		
+		if(!((state instanceof LuaBoolean && !((LuaBoolean)state).value) || (state instanceof LuaNil))) {
+			whileRunning = false;
+			return LuaNil.nil;
+		}
+		else {
+			if(!(toreturn instanceof List<?>)) {
+				return visitStatRepeat(statRepeat,arg);
+			}
+			else {
+				whileRunning = false;
+				return toreturn;
+			}
+		}
 	}
 
 	@Override
