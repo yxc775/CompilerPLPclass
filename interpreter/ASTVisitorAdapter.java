@@ -256,7 +256,7 @@ public abstract class ASTVisitorAdapter implements ASTVisitor {
 				e1str = (LuaString)e1exp;
 			}
 			else {
-				throw new TypeException(expBin.firstToken,"illegal arithmetic operation used on non-int val");
+				throw new TypeException(expBin.firstToken,"illegal concatenation operation used on non-string val");
 			}
 			
 			if(e2exp instanceof LuaInt) {
@@ -266,7 +266,7 @@ public abstract class ASTVisitorAdapter implements ASTVisitor {
 				e2str = (LuaString)e2exp;
 			}
 			else {
-				throw new TypeException(expBin.firstToken,"illegal arithmetic operation used on non-int val");
+				throw new TypeException(expBin.firstToken,"illegal concatenation operation used on non-string val");
 			}
 			
 			return new LuaString(e1str.value + e2str.value);
