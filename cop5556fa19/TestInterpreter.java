@@ -36,7 +36,6 @@ import interpreter.StaticSemanticException;
 			}
 		}
 				
-
 		/**
 		 * scans, parses, and interprets a program representing a Lua chunk.
 		 * 
@@ -733,8 +732,32 @@ import interpreter.StaticSemanticException;
 		List<LuaValue> expected = Arrays.asList(vals);
 		assertEquals(expected, ret);
 		}
-
-		 
+		
+		@Test
+		void testhw4() throws Exception{
+		String input = "return (100+20+3) .. \" one two three\"";
+		show(input);
+		List<LuaValue> ret = interpret(input);
+		show(ret);
+		LuaValue[] vals = {new LuaString("123 one two three")};
+		List<LuaValue> expected = Arrays.asList(vals);
+		assertEquals(expected, ret);
 		
 
+		input = "return 123 .. \" one two three\"";
+		show(input);
+		ret = interpret(input);
+		show(ret);
+		LuaValue[] vals2 = {new LuaString("123 one two three")};
+		expected = Arrays.asList(vals2);
+		assertEquals(expected, ret);
+		
+		input = "return 123 .. 345";
+		show(input);
+		ret = interpret(input);
+		show(ret);
+		LuaValue[] vals3 = {new LuaString("123345")};
+		expected = Arrays.asList(vals3);
+		assertEquals(expected, ret);
+		}
 }

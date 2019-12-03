@@ -244,12 +244,32 @@ public abstract class ASTVisitorAdapter implements ASTVisitor {
 		}	
 		}
 		else if(operation == Token.Kind.DOTDOT ) {
-			if(e1exp instanceof LuaString && e2exp instanceof LuaString) {
-				return new LuaString(((LuaString)e1exp).value + ((LuaString)e2exp).value);
+			LuaString e1str = null;
+			LuaString e2str = null;
+			
+			
+			
+			if(e1exp instanceof LuaInt) {
+				e1str = new LuaString(((LuaInt)e1exp).toString());
+			}
+			else if(e1exp instanceof LuaString){
+				e1str = (LuaString)e1exp;
 			}
 			else {
-				throw new TypeException(expBin.firstToken,"illegal string concatenation!");
+				throw new TypeException(expBin.firstToken,"illegal arithmetic operation used on non-int val");
 			}
+			
+			if(e2exp instanceof LuaInt) {
+				e2str =  new LuaString(((LuaInt)e2exp).toString());;
+			}
+			else if(e2exp instanceof LuaString){
+				e2str = (LuaString)e2exp;
+			}
+			else {
+				throw new TypeException(expBin.firstToken,"illegal arithmetic operation used on non-int val");
+			}
+			
+			return new LuaString(e1str.value + e2str.value);
 		}
 		else {
 			throw new TypeException(expBin.firstToken,"illegal binary operation detected");
